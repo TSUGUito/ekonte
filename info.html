@@ -1,0 +1,2373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>絵コンテ制作ツール | TSUGU / ACTIVE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<style>
+/* ============================================================
+   DESIGN TOKENS — 製図台/撮影台の硬質UI・白ベース・ゴシック体
+   ============================================================ */
+:root{
+  /* 色 */
+  --paper:#f4f5f6;          /* 作業台の下地 */
+  --surface:#ffffff;        /* 用紙・カード */
+  --surface-dim:#fafbfc;
+  --ink:#1b2430;            /* 主文字色（製図インク） */
+  --ink-2:#4b5563;          /* 補助文字 */
+  --ink-3:#8a94a0;          /* ラベル・目盛 */
+  --line:#d7dce1;           /* 罫線 */
+  --line-strong:#aeb7c0;    /* 強罫線 */
+  --accent:#0f4c81;         /* 製図ブルー（信頼感） */
+  --accent-weak:#e8f0f7;
+  --err:#b42318;  --err-bg:#fdf0ee;
+  --warn:#9a6700; --warn-bg:#fdf6e3;
+  --ok:#1a7f37;   --ok-bg:#eef8f0;
+  --focus:#0f4c81;
+  /* タイポ */
+  --font-sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic UI","Yu Gothic","Meiryo",sans-serif;
+  --font-mono:"SFMono-Regular","Consolas","Menlo","Osaka-Mono","MS Gothic",monospace;
+  --fs-xs:11px; --fs-sm:12.5px; --fs-md:14px; --fs-lg:16px; --fs-xl:20px;
+  /* レイアウト */
+  --radius:4px;             /* 角丸は最小限＝硬質 */
+  --gap:12px;
+  --shadow-lift:0 8px 24px rgba(27,36,48,.18);
+  --shadow-card:0 1px 2px rgba(27,36,48,.06);
+  --topbar-h:104px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font-sans);font-size:var(--fs-md);color:var(--ink);
+  background:
+    repeating-linear-gradient(0deg,transparent 0 23px,rgba(15,76,129,.035) 23px 24px),
+    repeating-linear-gradient(90deg,transparent 0 23px,rgba(15,76,129,.035) 23px 24px),
+    var(--paper);
+  line-height:1.55;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+img{display:block;max-width:100%}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* ============ 上部固定バー（タイトルブロック） ============ */
+.topbar{
+  position:sticky;top:0;z-index:50;background:var(--surface);
+  border-bottom:2px solid var(--ink);box-shadow:0 1px 0 var(--line),0 4px 14px rgba(27,36,48,.08);
+}
+.topbar-row{display:flex;align-items:center;gap:16px;padding:8px 16px;flex-wrap:wrap}
+.topbar-row + .topbar-row{border-top:1px solid var(--line);padding-top:6px;padding-bottom:6px}
+.brand{display:flex;flex-direction:column;line-height:1.2;min-width:150px}
+.brand b{font-size:var(--fs-lg);letter-spacing:.14em}
+.brand span{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.28em}
+.meta-fields{display:flex;gap:10px;flex-wrap:wrap;flex:1;min-width:220px}
+.meta-field{display:flex;flex-direction:column;gap:1px}
+.meta-field label{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.08em}
+.meta-field input{
+  border:none;border-bottom:1px solid var(--line-strong);background:transparent;
+  padding:2px 2px;font-size:var(--fs-md);min-width:120px;
+}
+.meta-field input#projTitle{font-size:var(--fs-lg);font-weight:700;min-width:220px}
+.meta-field input:focus{border-bottom-color:var(--accent)}
+
+/* 尺カウンター */
+.duration-block{
+  display:flex;align-items:stretch;gap:0;border:1.5px solid var(--ink);
+  background:var(--surface);border-radius:var(--radius);overflow:hidden;
+}
+.duration-cell{padding:4px 14px;display:flex;flex-direction:column;justify-content:center}
+.duration-cell + .duration-cell{border-left:1px solid var(--line)}
+.duration-cell .dlabel{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.12em}
+.duration-cell .dvalue{font-family:var(--font-mono);font-size:22px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.duration-cell .dsub{font-size:var(--fs-xs);color:var(--ink-2);font-family:var(--font-mono)}
+#diffValue.ok{color:var(--ok)} #diffValue.warn{color:var(--warn)} #diffValue.err{color:var(--err)}
+.target-input{display:flex;align-items:center;gap:4px}
+.target-input input{width:64px;border:1px solid var(--line-strong);border-radius:var(--radius);padding:2px 6px;font-family:var(--font-mono);text-align:right}
+.target-input .unit{font-size:var(--fs-xs);color:var(--ink-3)}
+.preset-btns{display:flex;gap:3px;margin-top:2px}
+.preset-btns button{
+  font-size:var(--fs-xs);border:1px solid var(--line-strong);background:var(--surface-dim);
+  border-radius:3px;padding:0 6px;cursor:pointer;color:var(--ink-2)
+}
+.preset-btns button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ツールバー */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);
+  background:var(--surface);border-radius:var(--radius);padding:6px 12px;cursor:pointer;
+  font-size:var(--fs-sm);font-weight:600;color:var(--ink);transition:background .12s,border-color .12s;
+  white-space:nowrap;
+}
+.btn:hover{background:var(--surface-dim);border-color:var(--ink-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#0c3d68}
+.btn.danger:hover{border-color:var(--err);color:var(--err)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn .badge{
+  min-width:18px;height:18px;border-radius:9px;background:var(--err);color:#fff;
+  font-size:var(--fs-xs);display:inline-flex;align-items:center;justify-content:center;padding:0 5px;font-weight:700;
+}
+.btn .badge.zero{background:var(--ok)}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden}
+.seg button{border:none;background:var(--surface);padding:6px 12px;cursor:pointer;font-size:var(--fs-sm);color:var(--ink-2);border-left:1px solid var(--line)}
+.seg button:first-child{border-left:none}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:600}
+.fps-select{display:flex;align-items:center;gap:4px;font-size:var(--fs-xs);color:var(--ink-3)}
+.fps-select select{border:1px solid var(--line-strong);border-radius:var(--radius);padding:4px 6px;background:var(--surface);font-family:var(--font-mono)}
+.spacer{flex:1}
+.menu-wrap{position:relative}
+.menu{
+  position:absolute;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line-strong);
+  border-radius:var(--radius);box-shadow:var(--shadow-lift);min-width:230px;z-index:60;display:none;padding:4px;
+}
+.menu.open{display:block}
+.menu button{
+  display:block;width:100%;text-align:left;border:none;background:none;padding:8px 10px;cursor:pointer;
+  font-size:var(--fs-sm);border-radius:3px;
+}
+.menu button:hover{background:var(--accent-weak)}
+.menu .menu-note{font-size:var(--fs-xs);color:var(--ink-3);padding:2px 10px 6px}
+.menu hr{border:none;border-top:1px solid var(--line);margin:4px 0}
+
+/* ============ ボード（シーン・コマ） ============ */
+.board-wrap{max-width:1240px;margin:0 auto;padding:20px 16px 120px}
+.board-actions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.storage-note{font-size:var(--fs-xs);color:var(--ink-3)}
+
+.scene{
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);
+  margin-bottom:18px;box-shadow:var(--shadow-card);
+}
+.scene.drag-over-scene{outline:2px dashed var(--accent);outline-offset:2px}
+.scene-head{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--ink);color:#fff;
+  border-radius:var(--radius) var(--radius) 0 0;cursor:default;
+}
+.scene-head .handle{cursor:grab;color:#9fb2c5;font-size:15px;padding:2px 4px;user-select:none}
+.scene-head .handle:active{cursor:grabbing}
+.scene-head .collapse-btn{
+  border:1px solid #4a5a6b;background:transparent;color:#fff;border-radius:3px;width:24px;height:24px;
+  cursor:pointer;font-size:12px;line-height:1;
+}
+.scene-head input.scene-name{
+  background:transparent;border:none;border-bottom:1px dashed #5a6c7f;color:#fff;font-weight:700;
+  font-size:var(--fs-md);min-width:120px;flex:0 1 280px;padding:2px 4px;
+}
+.scene-head input.scene-name::placeholder{color:#8fa2b5}
+.scene-head .scene-stat{font-family:var(--font-mono);font-size:var(--fs-xs);color:#b8c6d4;white-space:nowrap}
+.scene-head .scene-tools{margin-left:auto;display:flex;gap:4px}
+.scene-head .scene-tools button{
+  border:1px solid #4a5a6b;background:transparent;color:#dbe4ec;border-radius:3px;
+  padding:3px 8px;font-size:var(--fs-xs);cursor:pointer;white-space:nowrap;
+}
+.scene-head .scene-tools button:hover{background:#33465a}
+.scene.collapsed .cuts{display:none}
+
+/* コマ共通 */
+.cuts{padding:8px}
+.cut{
+  position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  margin-bottom:8px;transition:box-shadow .12s;
+}
+.cut:last-child{margin-bottom:0}
+.cut.dragging{opacity:.35}
+.cut.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+.drop-indicator{height:0;border-top:3px solid var(--accent);margin:2px 0;border-radius:2px;position:relative}
+.drop-indicator::before{content:"";position:absolute;left:-2px;top:-6px;width:9px;height:9px;background:var(--accent);border-radius:50%}
+
+.cut-no{
+  font-family:var(--font-mono);font-weight:700;font-size:var(--fs-md);color:var(--accent);
+  background:var(--accent-weak);border:1px solid var(--accent);border-radius:3px;
+  min-width:40px;text-align:center;padding:1px 4px;
+}
+.cut .handle{cursor:grab;color:var(--ink-3);font-size:16px;user-select:none;padding:2px 3px;line-height:1}
+.cut .handle:active{cursor:grabbing}
+
+.thumb{
+  position:relative;background:
+    repeating-linear-gradient(45deg,#f0f2f4 0 8px,#e9edf0 8px 16px);
+  border:1px dashed var(--line-strong);border-radius:3px;overflow:hidden;cursor:pointer;
+  aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;
+}
+.thumb:hover{border-color:var(--accent)}
+.thumb.dragover{border:2px solid var(--accent);background:var(--accent-weak)}
+.thumb img{width:100%;height:100%;object-fit:contain;background:#fff}
+.thumb .thumb-hint{font-size:var(--fs-xs);color:var(--ink-3);text-align:center;padding:4px;line-height:1.5}
+.thumb .thumb-btn{
+  position:absolute;top:3px;width:22px;height:22px;border-radius:3px;border:none;
+  background:rgba(27,36,48,.72);color:#fff;font-size:11px;cursor:pointer;display:none;line-height:1;
+}
+.thumb .thumb-btn:hover{background:var(--accent)}
+.thumb:hover .thumb-btn,.thumb:focus-within .thumb-btn{display:block}
+.thumb .tb-edit{right:53px}
+.thumb .tb-replace{right:28px}
+.thumb .tb-clear{right:3px}
+
+/* 画像エディタ */
+.imged-stage{position:relative;margin-bottom:12px}
+.imged-canvas{
+  display:block;width:100%;border:1.5px solid var(--ink);border-radius:3px;background:#fff;
+  cursor:grab;touch-action:none;
+}
+.imged-canvas.grabbing{cursor:grabbing}
+.imged-hint{font-size:var(--fs-xs);color:var(--ink-3);margin-top:4px}
+.imged-controls{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.imged-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.imged-row > label{font-size:var(--fs-sm);font-weight:700;min-width:72px}
+.imged-row input[type="range"]{flex:1;min-width:140px;accent-color:var(--accent)}
+.imged-row .imged-val{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-2);min-width:56px;text-align:right}
+.imged-actions{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.imged-actions .spacer{flex:1}
+
+.field{display:flex;flex-direction:column;gap:2px;min-width:0}
+.field > label{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.08em;display:flex;justify-content:space-between;align-items:baseline}
+.field textarea{
+  border:1px solid var(--line);border-radius:3px;padding:5px 7px;resize:vertical;
+  min-height:52px;font-size:var(--fs-sm);line-height:1.55;background:var(--surface-dim);
+}
+.field textarea:focus{border-color:var(--accent);background:#fff}
+.na-est{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-3)}
+.na-est.over{color:var(--err);font-weight:700}
+
+.tc-block{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.sec-input{display:flex;align-items:center;gap:4px}
+.sec-input input{
+  width:64px;border:1px solid var(--line-strong);border-radius:3px;padding:4px 6px;
+  font-family:var(--font-mono);text-align:right;font-size:var(--fs-md);font-weight:600;
+}
+.sec-input input.missing{border-color:var(--err);background:var(--err-bg)}
+.sec-input .unit{font-size:var(--fs-xs);color:var(--ink-3)}
+.tc-io{
+  font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-2);
+  border:1px solid var(--line);border-radius:3px;background:var(--surface-dim);
+  padding:3px 7px;line-height:1.7;white-space:nowrap;
+}
+.tc-io b{color:var(--ink);font-weight:600}
+
+.cut-tools{display:flex;gap:3px;align-items:center}
+.icon-btn{
+  border:1px solid var(--line);background:var(--surface);border-radius:3px;width:26px;height:26px;
+  cursor:pointer;font-size:12px;color:var(--ink-2);line-height:1;display:inline-flex;align-items:center;justify-content:center;
+}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+.icon-btn.del:hover{border-color:var(--err);color:var(--err)}
+
+.prompt-row{border-top:1px dashed var(--line);padding:4px 8px 6px;display:none}
+.prompt-row.has-prompt{display:flex;gap:6px;align-items:flex-start}
+.prompt-row .p-label{font-size:var(--fs-xs);color:var(--accent);font-weight:700;white-space:nowrap;padding-top:3px}
+.prompt-row .p-text{flex:1;font-size:var(--fs-xs);color:var(--ink-2);line-height:1.6;word-break:break-all}
+.prompt-row .icon-btn{flex-shrink:0}
+
+/* --- テンプレート: 横長（テーブル行） --- */
+.board.tpl-wide .cut-main{
+  display:grid;gap:10px;padding:8px 10px;align-items:start;
+  grid-template-columns:auto 190px minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,.9fr) 128px auto;
+}
+.board.tpl-wide .cut-lead{display:flex;flex-direction:column;align-items:center;gap:5px;padding-top:2px}
+/* --- テンプレート: 縦積み（1列カード） --- */
+.board.tpl-stack .cuts{max-width:640px;margin:0 auto}
+.board.tpl-stack .cut-main{display:grid;gap:10px;padding:10px;grid-template-columns:1fr}
+.board.tpl-stack .cut-lead{display:flex;flex-direction:row;align-items:center;gap:8px}
+.board.tpl-stack .cut-lead .cut-tools{margin-left:auto}
+/* --- テンプレート: 4コマ（2列グリッド） --- */
+.board.tpl-quad .cuts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.board.tpl-quad .cut{margin-bottom:0}
+.board.tpl-quad .cut-main{display:grid;gap:8px;padding:8px;grid-template-columns:1fr}
+.board.tpl-quad .cut-lead{display:flex;flex-direction:row;align-items:center;gap:8px}
+.board.tpl-quad .cut-lead .cut-tools{margin-left:auto}
+.board.tpl-quad .field textarea{min-height:40px}
+
+@media (max-width:980px){
+  .board.tpl-wide .cut-main{grid-template-columns:auto 160px minmax(0,1fr) 120px;grid-auto-rows:auto}
+  .board.tpl-wide .cut-main .f-content{grid-column:3/5}
+  .board.tpl-wide .cut-main .f-dialog{grid-column:2/4}
+  .board.tpl-wide .cut-main .f-camera{grid-column:4/5}
+}
+@media (max-width:680px){
+  :root{--topbar-h:auto}
+  .board.tpl-wide .cut-main,.board.tpl-quad .cuts{grid-template-columns:1fr}
+  .board.tpl-wide .cut-main .f-content,.board.tpl-wide .cut-main .f-dialog,.board.tpl-wide .cut-main .f-camera{grid-column:auto}
+  .board.tpl-wide .cut-lead{flex-direction:row}
+  .board.tpl-wide .cut-lead .cut-tools{margin-left:auto}
+  .duration-cell .dvalue{font-size:17px}
+  .topbar-row{gap:8px}
+}
+
+/* ============ チェックパネル ============ */
+.panel-backdrop{position:fixed;inset:0;background:rgba(27,36,48,.35);z-index:80;display:none}
+.panel-backdrop.open{display:block}
+.check-panel{
+  position:fixed;top:0;right:0;bottom:0;width:min(430px,94vw);background:var(--surface);
+  border-left:2px solid var(--ink);z-index:90;transform:translateX(102%);transition:transform .18s ease;
+  display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(27,36,48,.15);
+}
+.check-panel.open{transform:translateX(0)}
+.check-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:2px solid var(--ink)}
+.check-head h2{font-size:var(--fs-lg);letter-spacing:.08em}
+.check-head .icon-btn{margin-left:auto}
+.check-settings{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;font-size:var(--fs-sm)}
+.check-settings input{width:56px;border:1px solid var(--line-strong);border-radius:3px;padding:3px 6px;font-family:var(--font-mono);text-align:right}
+.check-list{flex:1;overflow-y:auto;padding:10px 14px}
+.check-item{
+  border:1px solid var(--line);border-left-width:4px;border-radius:3px;padding:8px 10px;margin-bottom:8px;
+  font-size:var(--fs-sm);cursor:pointer;background:var(--surface);
+}
+.check-item:hover{background:var(--surface-dim)}
+.check-item .ci-tag{font-size:var(--fs-xs);font-weight:700;letter-spacing:.1em;display:inline-block;margin-bottom:2px}
+.check-item.err{border-left-color:var(--err);background:var(--err-bg)} .check-item.err .ci-tag{color:var(--err)}
+.check-item.warn{border-left-color:var(--warn);background:var(--warn-bg)} .check-item.warn .ci-tag{color:var(--warn)}
+.check-item.ok{border-left-color:var(--ok);background:var(--ok-bg)} .check-item.ok .ci-tag{color:var(--ok)}
+.check-item .ci-loc{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-3)}
+.check-summary{padding:8px 14px;border-top:1px solid var(--line);font-size:var(--fs-sm);display:flex;gap:14px;font-family:var(--font-mono)}
+.check-summary .s-err{color:var(--err);font-weight:700}
+.check-summary .s-warn{color:var(--warn);font-weight:700}
+.check-summary .s-ok{color:var(--ok);font-weight:700}
+
+/* ============ モーダル（AI連携） ============ */
+.modal-backdrop{position:fixed;inset:0;background:rgba(27,36,48,.45);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow-y:auto}
+.modal-backdrop.open{display:flex}
+.modal{
+  background:var(--surface);border:2px solid var(--ink);border-radius:var(--radius);
+  width:min(760px,100%);box-shadow:var(--shadow-lift);
+}
+.modal-head{display:flex;align-items:center;padding:12px 16px;border-bottom:2px solid var(--ink)}
+.modal-head h2{font-size:var(--fs-lg);letter-spacing:.08em}
+.modal-head .icon-btn{margin-left:auto}
+.modal-body{padding:14px 16px}
+.api-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-dim)}
+.api-row label{font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
+.api-row input[type="password"],.api-row input[type="text"]{flex:1;min-width:200px;border:1px solid var(--line-strong);border-radius:3px;padding:6px 8px;font-family:var(--font-mono);font-size:var(--fs-sm)}
+.api-row .api-note{width:100%;font-size:var(--fs-xs);color:var(--ink-3)}
+.tabs{display:flex;border-bottom:2px solid var(--ink);margin-bottom:12px}
+.tabs button{border:none;background:none;padding:8px 14px;cursor:pointer;font-size:var(--fs-sm);font-weight:600;color:var(--ink-3);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabpane{display:none}
+.tabpane.active{display:block}
+.tabpane textarea{width:100%;border:1px solid var(--line-strong);border-radius:3px;padding:8px;min-height:140px;font-size:var(--fs-sm);line-height:1.6;resize:vertical}
+.ai-opts{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0;font-size:var(--fs-sm)}
+.ai-opts input[type="number"]{width:64px;border:1px solid var(--line-strong);border-radius:3px;padding:4px 6px;font-family:var(--font-mono);text-align:right}
+.ai-opts label{display:flex;align-items:center;gap:5px}
+.ai-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ai-status{font-size:var(--fs-sm);margin-top:10px;padding:8px 10px;border-radius:3px;display:none;white-space:pre-wrap;word-break:break-word}
+.ai-status.info{display:block;background:var(--accent-weak);color:var(--accent)}
+.ai-status.error{display:block;background:var(--err-bg);color:var(--err)}
+.ai-status.ok{display:block;background:var(--ok-bg);color:var(--ok)}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.prompt-result{margin-top:12px;max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:3px;display:none}
+.prompt-result.show{display:block}
+.prompt-result table{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
+.prompt-result th,.prompt-result td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.prompt-result th{background:var(--surface-dim);font-weight:700;position:sticky;top:0}
+.prompt-result td.p-no{font-family:var(--font-mono);white-space:nowrap}
+
+/* 使い方ガイド */
+.help-body{max-height:66vh;overflow-y:auto;padding-right:4px}
+.help-body h3{
+  font-size:var(--fs-md);color:var(--accent);letter-spacing:.06em;
+  border-bottom:1px solid var(--line);padding-bottom:4px;margin:18px 0 8px;
+}
+.help-body h3:first-child{margin-top:0}
+.help-body p{font-size:var(--fs-sm);color:var(--ink-2);margin-bottom:8px}
+.help-body p b{color:var(--ink)}
+.help-step{display:flex;gap:10px;margin-bottom:8px;font-size:var(--fs-sm);color:var(--ink-2)}
+.help-step .hs-no{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;
+  font-family:var(--font-mono);font-size:var(--fs-xs);font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;margin-top:1px;
+}
+.help-kbd{
+  font-family:var(--font-mono);font-size:var(--fs-xs);background:var(--surface-dim);
+  border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:3px;padding:0 5px;white-space:nowrap;
+}
+.help-note{
+  font-size:var(--fs-xs);color:var(--ink-2);background:var(--warn-bg);border-left:3px solid var(--warn);
+  padding:6px 10px;border-radius:0 3px 3px 0;margin-bottom:8px;
+}
+
+/* プロジェクト一覧 */
+.proj-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.proj-list{max-height:56vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.proj-item{
+  border:1px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;
+  display:flex;align-items:center;gap:12px;background:var(--surface);flex-wrap:wrap;
+}
+.proj-item.current{border-color:var(--accent);background:var(--accent-weak)}
+.proj-item .pj-info{flex:1;min-width:180px}
+.proj-item .pj-title{font-weight:700;font-size:var(--fs-md)}
+.proj-item .pj-title .pj-badge{
+  font-size:var(--fs-xs);color:var(--accent);border:1px solid var(--accent);border-radius:3px;
+  padding:0 5px;margin-left:6px;font-weight:600;vertical-align:1px;
+}
+.proj-item .pj-meta{font-size:var(--fs-xs);color:var(--ink-3);font-family:var(--font-mono)}
+.proj-item .pj-tools{display:flex;gap:4px;flex-wrap:wrap}
+.proj-item .pj-tools .btn{padding:4px 10px;font-size:var(--fs-xs)}
+.proj-empty{color:var(--ink-3);font-size:var(--fs-sm);text-align:center;padding:24px 0}
+
+/* トースト */
+.toast-area{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:6px;align-items:center}
+.toast{
+  background:var(--ink);color:#fff;padding:8px 18px;border-radius:var(--radius);font-size:var(--fs-sm);
+  box-shadow:var(--shadow-lift);animation:toastin .18s ease-out;max-width:88vw;
+}
+.toast.err{background:var(--err)}
+@keyframes toastin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* PDF用シート（非表示・書き出し時のみ描画） */
+#pdfStage{position:fixed;left:-20000px;top:0;width:794px;background:#fff}
+.pdf-page{width:794px;height:1123px;background:#fff;padding:34px 38px;position:relative;font-family:var(--font-sans);color:#1b2430;overflow:hidden}
+.pdf-title-block{border:2px solid #1b2430;display:flex;margin-bottom:14px}
+.pdf-title-cell{padding:6px 12px;border-right:1px solid #1b2430}
+.pdf-title-cell:last-child{border-right:none}
+.pdf-title-cell .pt-label{font-size:9px;color:#6a7480;letter-spacing:.1em}
+.pdf-title-cell .pt-value{font-size:13px;font-weight:700}
+.pdf-title-cell.grow{flex:1}
+.pdf-cut{display:flex;border:1px solid #1b2430;margin-bottom:10px;height:212px}
+.pdf-cut-no{width:44px;border-right:1px solid #1b2430;display:flex;flex-direction:column;align-items:center;padding-top:6px;gap:4px;background:#f4f6f8}
+.pdf-cut-no .no{font-family:var(--font-mono);font-weight:700;font-size:15px;color:#0f4c81}
+.pdf-cut-no .sc{font-size:8px;color:#6a7480;writing-mode:vertical-rl;letter-spacing:.1em}
+.pdf-cut-img{width:300px;border-right:1px solid #1b2430;display:flex;align-items:center;justify-content:center;background:#fff;padding:4px}
+.pdf-cut-img img{max-width:100%;max-height:100%;object-fit:contain}
+.pdf-cut-img .noimg{color:#aab3bc;font-size:10px}
+.pdf-cut-fields{flex:1;display:flex;flex-direction:column;min-width:0}
+.pdf-field{border-bottom:1px solid #cfd6dc;padding:4px 8px;flex:1;overflow:hidden}
+.pdf-field:last-child{border-bottom:none}
+.pdf-field .pf-label{font-size:8px;color:#6a7480;letter-spacing:.12em}
+.pdf-field .pf-value{font-size:10.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.pdf-cut-tc{width:104px;border-left:1px solid #1b2430;background:#f4f6f8;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:8px;font-family:var(--font-mono)}
+.pdf-cut-tc .tc-item .l{font-size:8px;color:#6a7480;letter-spacing:.1em;font-family:var(--font-sans)}
+.pdf-cut-tc .tc-item .v{font-size:11.5px;font-weight:700}
+.pdf-footer{position:absolute;bottom:16px;left:38px;right:38px;display:flex;justify-content:space-between;font-size:9px;color:#6a7480;border-top:1px solid #cfd6dc;padding-top:5px}
+
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- ============ 上部固定バー ============ -->
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand"><b>絵コンテ</b><span>STORYBOARD</span></div>
+    <div class="meta-fields">
+      <div class="meta-field"><label for="projTitle">作品タイトル</label><input id="projTitle" placeholder="無題プロジェクト"></div>
+      <div class="meta-field"><label for="projClient">クライアント</label><input id="projClient" placeholder="株式会社アクティブ"></div>
+      <div class="meta-field"><label for="projAuthor">担当</label><input id="projAuthor" placeholder="担当者名"></div>
+      <div class="meta-field"><label for="projDate">日付</label><input id="projDate" type="date"></div>
+    </div>
+    <div class="duration-block" aria-live="polite">
+      <div class="duration-cell">
+        <span class="dlabel">合計尺 TOTAL</span>
+        <span class="dvalue" id="totalTC">00:00:00</span>
+        <span class="dsub" id="totalSec">0.0 s / 0 cut</span>
+      </div>
+      <div class="duration-cell">
+        <span class="dlabel">目標尺 TARGET</span>
+        <span class="target-input"><input id="targetSec" type="number" min="0" step="1" value="30" aria-label="目標尺（秒）"><span class="unit">秒</span></span>
+        <span class="preset-btns">
+          <button type="button" data-preset="15">15</button>
+          <button type="button" data-preset="30">30</button>
+          <button type="button" data-preset="60">60</button>
+        </span>
+      </div>
+      <div class="duration-cell">
+        <span class="dlabel">差分 DIFF</span>
+        <span class="dvalue" id="diffValue">±0.0s</span>
+        <span class="dsub" id="diffNote">目標と一致</span>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-row">
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="コマ割りテンプレート">
+        <button type="button" data-tpl="wide" aria-pressed="true">横長</button>
+        <button type="button" data-tpl="stack" aria-pressed="false">縦積み</button>
+        <button type="button" data-tpl="quad" aria-pressed="false">4コマ</button>
+      </div>
+      <button type="button" class="btn" id="btnUndo" disabled title="元に戻す（⌘Z / Ctrl+Z）" aria-label="元に戻す">↩</button>
+      <button type="button" class="btn" id="btnRedo" disabled title="やり直す（⌘⇧Z / Ctrl+Y）" aria-label="やり直す">↪</button>
+      <span class="fps-select">
+        <label for="fpsSelect">FPS</label>
+        <select id="fpsSelect" aria-label="フレームレート">
+          <option value="24">24</option>
+          <option value="30" selected>30</option>
+          <option value="60">60</option>
+        </select>
+        <span id="tcFormatNote">TC: mm:ss:ff</span>
+      </span>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="btnHelp" aria-haspopup="dialog">？ 使い方</button>
+      <button type="button" class="btn" id="btnProjects">プロジェクト</button>
+      <button type="button" class="btn" id="btnCheck">チェック <span class="badge zero" id="checkBadge">0</span></button>
+      <button type="button" class="btn primary" id="btnAI">AI下書き</button>
+      <div class="menu-wrap">
+        <button type="button" class="btn" id="btnExport" aria-haspopup="true" aria-expanded="false">書き出し ▾</button>
+        <div class="menu" id="exportMenu" role="menu">
+          <div class="menu-note">クライアント提出</div>
+          <button type="button" id="btnPdf" role="menuitem">PDF 絵コンテ用紙（A4縦）</button>
+          <hr>
+          <div class="menu-note">Vコン工程（Premiere / AE）</div>
+          <button type="button" id="btnCsv" role="menuitem">CSV 書き出し（UTF-8 BOM）</button>
+          <hr>
+          <div class="menu-note">作業データ</div>
+          <button type="button" id="btnJsonSave" role="menuitem">JSON 保存（中断・再開用）</button>
+          <button type="button" id="btnJsonLoad" role="menuitem">JSON 読込</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ ボード ============ -->
+<main class="board-wrap">
+  <div class="board-actions">
+    <button type="button" class="btn" id="btnAddScene">＋ シーン追加</button>
+    <button type="button" class="btn" id="btnAddCut">＋ コマ追加（最終シーン）</button>
+    <span class="storage-note" id="storageNote"></span>
+  </div>
+  <div class="board tpl-wide" id="board"></div>
+</main>
+
+<!-- ============ チェックパネル ============ -->
+<div class="panel-backdrop" id="checkBackdrop"></div>
+<aside class="check-panel" id="checkPanel" role="dialog" aria-modal="true" aria-labelledby="checkTitle">
+  <div class="check-head">
+    <h2 id="checkTitle">チェック結果</h2>
+    <button type="button" class="icon-btn" id="btnCheckClose" aria-label="閉じる">✕</button>
+  </div>
+  <div class="check-settings">
+    <label for="naRate">ナレーション速度</label>
+    <input id="naRate" type="number" min="1" max="15" step="0.5" value="6">
+    <span style="color:var(--ink-3);font-size:var(--fs-xs)">全角文字 / 秒（日本語NA標準 ≒ 6）</span>
+  </div>
+  <div class="check-list" id="checkList"></div>
+  <div class="check-summary" id="checkSummary"></div>
+</aside>
+
+<!-- ============ AIモーダル ============ -->
+<div class="modal-backdrop" id="aiBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aiTitle">
+    <div class="modal-head">
+      <h2 id="aiTitle">AI連携（Claude Opus 4.8）</h2>
+      <button type="button" class="icon-btn" id="btnAiClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="api-row">
+        <label for="apiKey">APIキー</label>
+        <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+        <label style="font-weight:400;font-size:var(--fs-xs);display:flex;align-items:center;gap:4px">
+          <input type="checkbox" id="apiKeyRemember"> このブラウザに保持
+        </label>
+        <span class="api-note">キーはこの端末のブラウザ内のみで使用します。ファイルやコードには保存されません。</span>
+      </div>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabDraft" aria-selected="true" aria-controls="paneDraft">企画 → 絵コンテ下書き</button>
+        <button type="button" role="tab" id="tabPrompt" aria-selected="false" aria-controls="panePrompt">Gemini画像プロンプト一括生成</button>
+      </div>
+      <div class="tabpane active" id="paneDraft" role="tabpanel" aria-labelledby="tabDraft">
+        <label for="planText" style="font-size:var(--fs-sm);font-weight:700;display:block;margin-bottom:4px">企画テキスト</label>
+        <textarea id="planText" placeholder="企画書・構成メモを貼り付けてください。目的、ターゲット、伝えたい内容、トーンなどが含まれていると精度が上がります。"></textarea>
+        <div class="ai-opts">
+          <label>目標尺 <input type="number" id="aiTargetSec" min="5" step="5"> 秒</label>
+          <label>コマ数目安 <input type="number" id="aiCutCount" min="0" step="1" placeholder="自動"> コマ</label>
+          <label><input type="radio" name="applyMode" value="replace" checked> 全体を置き換え</label>
+          <label><input type="radio" name="applyMode" value="append"> 末尾に追加</label>
+        </div>
+        <div class="ai-actions">
+          <button type="button" class="btn primary" id="btnGenDraft">下書きを生成してテーブルに反映</button>
+        </div>
+        <div class="ai-status" id="draftStatus" aria-live="polite"></div>
+      </div>
+      <div class="tabpane" id="panePrompt" role="tabpanel" aria-labelledby="tabPrompt">
+        <p style="font-size:var(--fs-sm);color:var(--ink-2);margin-bottom:10px">
+          各コマの「カット内容・カメラワーク」から、Web版Geminiに貼り付ける<b>白黒シルエット画像生成用の日本語プロンプト</b>をコマ単位で一括生成します。生成後は各コマの下部に表示され、個別コピーできます。
+        </p>
+        <div class="ai-actions">
+          <button type="button" class="btn primary" id="btnGenPrompts">全コマ分を一括生成</button>
+          <button type="button" class="btn" id="btnCopyAllPrompts" disabled>全プロンプトをコピー</button>
+        </div>
+        <div class="ai-status" id="promptStatus" aria-live="polite"></div>
+        <div class="prompt-result" id="promptResult"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 画像エディタモーダル ============ -->
+<div class="modal-backdrop" id="imgedBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="imgedTitle">
+    <div class="modal-head">
+      <h2 id="imgedTitle">画像を編集</h2>
+      <button type="button" class="icon-btn" id="btnImgedClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="imged-stage">
+        <canvas class="imged-canvas" id="imgedCanvas" width="640" height="360" aria-label="編集プレビュー。枠内がコマに表示される範囲です"></canvas>
+        <p class="imged-hint">枠内＝コマに表示される範囲（16:9）。画像をドラッグで位置調整、ホイールで拡大縮小できます。</p>
+      </div>
+      <div class="imged-controls">
+        <div class="imged-row">
+          <label for="imgedZoom">拡大縮小</label>
+          <input type="range" id="imgedZoom" min="20" max="400" value="100" aria-label="拡大縮小（％）">
+          <span class="imged-val" id="imgedZoomVal">100%</span>
+        </div>
+        <div class="imged-row">
+          <label for="imgedRotFine">回転</label>
+          <button type="button" class="btn" id="imgedRotL" aria-label="左に90度回転">⟲ 90°</button>
+          <button type="button" class="btn" id="imgedRotR" aria-label="右に90度回転">⟳ 90°</button>
+          <input type="range" id="imgedRotFine" min="-45" max="45" value="0" step="0.5" aria-label="回転の微調整（度）">
+          <span class="imged-val" id="imgedRotVal">0°</span>
+        </div>
+      </div>
+      <div class="imged-actions">
+        <button type="button" class="btn" id="imgedReset">リセット</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="imgedCancel">キャンセル</button>
+        <button type="button" class="btn primary" id="imgedApply">適用</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 使い方ガイドモーダル ============ -->
+<div class="modal-backdrop" id="helpBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal-head">
+      <h2 id="helpTitle">使い方</h2>
+      <button type="button" class="icon-btn" id="btnHelpClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body help-body">
+
+      <h3>基本の流れ</h3>
+      <div class="help-step"><span class="hs-no">1</span><span><b>AI下書き</b>に企画テキストを貼り付けて生成すると、カット割り・カメラワーク・秒数配分がテーブルに反映されます（手作業で組む場合は「＋シーン追加」「＋コマ追加」から）。</span></div>
+      <div class="help-step"><span class="hs-no">2</span><span><b>AI下書き → Gemini画像プロンプト一括生成</b>で各コマ用のプロンプトを作成し、コピーしてWeb版Geminiで白黒シルエット画像を生成します。</span></div>
+      <div class="help-step"><span class="hs-no">3</span><span>生成した画像を各コマの画像枠に<b>ドラッグ&ドロップ</b>（またはクリックで選択）してはめ込みます。はめ込み後に画像をクリックすると<b>編集画面</b>が開き、トリミング（ドラッグで位置調整）・拡大縮小・回転ができます。編集は何度でもやり直せます（元画像を保持）。</span></div>
+      <div class="help-step"><span class="hs-no">4</span><span><b>チェック</b>で尺・タイムコード・ナレーション尺・未入力を確認し、問題を解消します。</span></div>
+      <div class="help-step"><span class="hs-no">5</span><span><b>書き出し</b>から提出用PDF（A4縦）、Vコン用CSV、保存用JSONを出力します。</span></div>
+
+      <h3>コマの操作</h3>
+      <p>行左端の <b>⠿</b> をドラッグすると行が浮き、挿入位置が青いラインでハイライトされます。シーンをまたぐ移動も可能です。キーボード操作は各コマの <span class="help-kbd">↑</span> <span class="help-kbd">↓</span> ボタンで代替できます。<span class="help-kbd">⧉</span> で複製、<span class="help-kbd">✕</span> で削除します。</p>
+      <p>シーン見出しのドラッグでシーンごと一括移動、<span class="help-kbd">▾</span> で折りたたみできます。上部の「横長 / 縦積み / 4コマ」でコマ割り表示を切り替えられます。</p>
+      <p>操作を間違えたら <span class="help-kbd">⌘Z</span>（Windows: <span class="help-kbd">Ctrl+Z</span>）で元に戻す、<span class="help-kbd">⌘⇧Z</span>（<span class="help-kbd">Ctrl+Y</span>）でやり直しできます（最大10回・上部の ↩ ↪ ボタンでも可）。テキスト入力中の文字単位の取り消しは、各入力欄内で通常どおり <span class="help-kbd">⌘Z</span> が使えます。</p>
+
+      <h3>秒数とタイムコード</h3>
+      <p>各コマは<b>秒数だけを入力</b>します（小数可・例: 2.5）。IN-OUTは先頭から自動算出され、並べ替え・追加・削除のたびに全コマ再計算されます。表示形式は <b>mm:ss:ff</b>、フレームレートは既定30fps（24/60切替可、切替時も自動再計算）。合計尺は上部に常時表示され、目標尺（15/30/60または任意）との差分が色で分かります。</p>
+
+      <h3>チェックの見方</h3>
+      <p><b>エラー</b>＝提出前に必ず解消（秒数未入力、目標尺と1秒超の差など）。<b>警告</b>＝要確認（画像・カット内容の未入力、ナレーション尺オーバーなど）。項目をクリックすると該当コマにジャンプします。ナレーション尺は「全角6文字＝1秒」で推定し、係数はパネル上部で調整できます。</p>
+
+      <h3>保存とプロジェクト</h3>
+      <p>作業は<b>このPCのこのブラウザ内に自動保存</b>され、次回起動時に前回の続きから再開できます。「プロジェクト」ボタンで一覧を開き、新規作成・開く・<b>複製（流用）</b>・名前変更・削除ができます。</p>
+      <div class="help-note">ブラウザ内保存の容量には上限（目安5MB）があります。納品済み案件や別PCとの共有は「書き出し → JSON保存」でファイル化し、社内サーバー等で管理してください。JSONは「プロジェクト一覧 → JSONファイルを取込」で新規プロジェクトとして戻せます。</div>
+
+      <h3>AI連携について</h3>
+      <p>「AI下書き」を開き、AnthropicのAPIキー（sk-ant-…）を入力すると利用できます。キーはこの端末のブラウザ内のみで使用され、ファイルには保存されません。「このブラウザに保持」をオンにすると次回入力を省略できます。使用モデルは Claude Opus 4.8 です。</p>
+
+      <h3>書き出し形式</h3>
+      <p><b>PDF</b>＝クライアント提出用の絵コンテ用紙（A4縦・1ページ4コマ・通し番号と合計尺入り）。<b>CSV</b>＝Vコン工程（Premiere/AE）受け渡し用。UTF-8 BOM付きのためExcelでも文字化けしません。<b>JSON</b>＝中断・再開／バックアップ用の完全データ（画像込み）。</p>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ プロジェクト管理モーダル ============ -->
+<div class="modal-backdrop" id="projBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="projModalTitle">
+    <div class="modal-head">
+      <h2 id="projModalTitle">プロジェクト一覧</h2>
+      <button type="button" class="icon-btn" id="btnProjClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="proj-toolbar">
+        <button type="button" class="btn primary" id="btnProjNew">＋ 新規プロジェクト</button>
+        <button type="button" class="btn" id="btnProjImport">JSONファイルを取込（新規として）</button>
+      </div>
+      <div class="proj-list" id="projList"></div>
+      <p style="font-size:var(--fs-xs);color:var(--ink-3);margin-top:10px">
+        保存先はこのPCのこのブラウザ内です。別PCとの共有・長期保管・バックアップには「書き出し → JSON保存」をご利用ください。
+      </p>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="jsonFileInput" accept="application/json,.json" class="visually-hidden" aria-hidden="true" tabindex="-1">
+<input type="file" id="imgFileInput" accept="image/*" class="visually-hidden" aria-hidden="true" tabindex="-1">
+<div class="toast-area" id="toastArea" aria-live="polite"></div>
+<div id="pdfStage" aria-hidden="true"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   絵コンテ制作ツール  — 株式会社TSUGU / 株式会社アクティブ 社内用
+   単一HTML・ブラウザ完結。運用時AI: claude-opus-4-8（Anthropic API）
+   TC仕様: 秒数入力(小数可) → フレーム換算(既定30fps) → IN/OUT自動算出
+   表示形式: mm:ss:ff
+   ============================================================ */
+
+/* ---------------- state ---------------- */
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+
+const newCut = (partial = {}) => ({
+  id: uid(), image: null, content: "", dialog: "", camera: "", sec: null, prompt: "", ...partial
+});
+const newScene = (name, cuts) => ({
+  id: uid(), name: name || "", collapsed: false, cuts: cuts || [newCut()]
+});
+
+let state = {
+  meta: {
+    title: "", client: "", author: "", date: new Date().toISOString().slice(0, 10),
+    fps: 30, targetSec: 30, naRate: 6, template: "wide"
+  },
+  scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])]
+};
+
+/* ---------------- storage（複数プロジェクト対応 / localStorage可否を自動判定） ---------------- */
+const LS_LEGACY = "tsugu_storyboard_v1";           /* 旧形式（1枠）: 初回に自動移行 */
+const LS_API = "tsugu_storyboard_apikey";
+const LS_INDEX = "tsugu_sb_index_v1";              /* プロジェクト一覧メタ */
+const LS_CURRENT = "tsugu_sb_current_v1";          /* 最後に開いていたプロジェクトID */
+const LS_PROJ = (id) => "tsugu_sb_proj_" + id;     /* 各プロジェクト本体 */
+let storageOK = false;
+try {
+  localStorage.setItem("__sb_test", "1");
+  localStorage.removeItem("__sb_test");
+  storageOK = true;
+} catch (e) { storageOK = false; }
+
+let currentProjectId = null;
+let quotaWarned = false;
+
+function loadIndex() {
+  if (!storageOK) return [];
+  try { return JSON.parse(localStorage.getItem(LS_INDEX)) || []; } catch (e) { return []; }
+}
+function saveIndex(idx) {
+  if (!storageOK) return;
+  try { localStorage.setItem(LS_INDEX, JSON.stringify(idx)); } catch (e) {}
+}
+function projectSummary() {
+  const rows = flattenCuts();
+  return {
+    title: state.meta.title || "無題プロジェクト",
+    updatedAt: new Date().toISOString(),
+    cutCount: rows.length,
+    totalSec: Math.round(totalSeconds() * 10) / 10
+  };
+}
+function persistCurrentProject() {
+  if (!storageOK || !currentProjectId) return;
+  try {
+    localStorage.setItem(LS_PROJ(currentProjectId), JSON.stringify(state));
+    const idx = loadIndex();
+    const i = idx.findIndex(p => p.id === currentProjectId);
+    const entry = { id: currentProjectId, ...projectSummary() };
+    if (i >= 0) idx[i] = entry; else idx.unshift(entry);
+    idx.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))); /* 更新が新しい順 */
+    saveIndex(idx);
+    localStorage.setItem(LS_CURRENT, currentProjectId);
+  } catch (e) {
+    if (!quotaWarned) {
+      quotaWarned = true;
+      toast("ブラウザの保存容量が上限に近づいています。「書き出し → JSON保存」でファイルに退避してください。", true);
+    }
+  }
+}
+function loadProject(id) {
+  if (!storageOK) return false;
+  try {
+    const raw = localStorage.getItem(LS_PROJ(id));
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (data && data.scenes && data.meta) {
+      state = data;
+      currentProjectId = id;
+      if (typeof clearHistory === "function") clearHistory(); /* プロジェクト切替で履歴リセット */
+      try { localStorage.setItem(LS_CURRENT, id); } catch (e) {}
+      return true;
+    }
+  } catch (e) {}
+  return false;
+}
+function createProjectFromState(newState, opts) {
+  /* 現在の作業を保存してから新プロジェクトに切替 */
+  if (currentProjectId) persistCurrentProject();
+  state = newState;
+  currentProjectId = uid();
+  if (typeof clearHistory === "function") clearHistory();
+  persistCurrentProject();
+  if (!opts || !opts.silent) toast("プロジェクトを作成しました");
+}
+
+let saveTimer = null;
+function scheduleSave() {
+  if (!storageOK) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persistCurrentProject, 400);
+}
+function tryRestore() {
+  if (!storageOK) return false;
+  /* 1) 前回のプロジェクトを復元 */
+  try {
+    const cur = localStorage.getItem(LS_CURRENT);
+    if (cur && loadProject(cur)) return true;
+  } catch (e) {}
+  /* 2) 旧形式（1枠保存）からの自動移行 */
+  try {
+    const raw = localStorage.getItem(LS_LEGACY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data && data.scenes && data.meta) {
+        state = data;
+        currentProjectId = uid();
+        persistCurrentProject();
+        localStorage.removeItem(LS_LEGACY);
+        return true;
+      }
+    }
+  } catch (e) {}
+  /* 3) 一覧に何かあれば先頭を開く */
+  const idx = loadIndex();
+  for (const p of idx) { if (loadProject(p.id)) return true; }
+  return false;
+}
+
+/* ---------------- timecode ---------------- */
+const fps = () => Number(state.meta.fps) || 30;
+const secToFrames = (sec) => Math.round((Number(sec) || 0) * fps());
+function framesToTC(fr) {
+  const f = Math.max(0, Math.round(fr));
+  const fpsN = fps();
+  const totalSec = Math.floor(f / fpsN);
+  const ff = f % fpsN;
+  const mm = Math.floor(totalSec / 60);
+  const ss = totalSec % 60;
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(mm)}:${p(ss)}:${p(ff)}`;
+}
+
+/* flatten: 全コマを順番に + 通し番号/IN/OUT算出 */
+function flattenCuts() {
+  const rows = [];
+  let cursor = 0; /* frames */
+  let no = 1;
+  state.scenes.forEach((scene, si) => {
+    scene.cuts.forEach((cut, ci) => {
+      const durF = cut.sec != null && cut.sec > 0 ? secToFrames(cut.sec) : 0;
+      rows.push({ scene, cut, si, ci, no, inF: cursor, outF: cursor + durF, durF });
+      cursor += durF;
+      no++;
+    });
+  });
+  return rows;
+}
+const totalFrames = () => flattenCuts().reduce((a, r) => a + r.durF, 0);
+const totalSeconds = () => totalFrames() / fps();
+
+/* ---------------- NA推定 ---------------- */
+function naCharCount(text) {
+  if (!text) return 0;
+  /* 空白・改行を除外して文字数カウント（全角基準の目安） */
+  return text.replace(/[\s　]/g, "").length;
+}
+function naEstimateSec(text) {
+  const rate = Number(state.meta.naRate) || 6;
+  return naCharCount(text) / rate;
+}
+
+/* ---------------- DOM helpers ---------------- */
+const $ = (sel, el = document) => el.querySelector(sel);
+const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+const boardEl = $("#board");
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function toast(msg, isErr) {
+  const t = document.createElement("div");
+  t.className = "toast" + (isErr ? " err" : "");
+  t.textContent = msg;
+  $("#toastArea").appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/* ---------------- Undo/Redo（最大10段階・スナップショット方式） ---------------- */
+const MAX_HISTORY = 10;
+let undoStack = [];
+let redoStack = [];
+let lastTypeKey = null;
+let lastTypeTime = 0;
+
+/* 変更「前」に呼ぶ。typeKey指定時は連続タイピングを1操作にまとめる */
+function pushHistory(typeKey) {
+  const now = Date.now();
+  if (typeKey && typeKey === lastTypeKey && now - lastTypeTime < 1200) {
+    lastTypeTime = now;
+    return;
+  }
+  lastTypeKey = typeKey || null;
+  lastTypeTime = now;
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack = [];
+  updateUndoButtons();
+}
+function clearHistory() {
+  undoStack = []; redoStack = []; lastTypeKey = null;
+  updateUndoButtons();
+}
+function undo() {
+  if (!undoStack.length) return;
+  redoStack.push(JSON.stringify(state));
+  if (redoStack.length > MAX_HISTORY) redoStack.shift();
+  state = JSON.parse(undoStack.pop());
+  lastTypeKey = null;
+  syncMetaInputs(); render(); updateUndoButtons();
+  toast("元に戻しました");
+}
+function redo() {
+  if (!redoStack.length) return;
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  state = JSON.parse(redoStack.pop());
+  lastTypeKey = null;
+  syncMetaInputs(); render(); updateUndoButtons();
+  toast("やり直しました");
+}
+function updateUndoButtons() {
+  const u = $("#btnUndo"), r = $("#btnRedo");
+  if (u) u.disabled = !undoStack.length;
+  if (r) r.disabled = !redoStack.length;
+}
+document.addEventListener("keydown", (e) => {
+  if (!(e.metaKey || e.ctrlKey)) return;
+  const k = e.key.toLowerCase();
+  if (k !== "z" && k !== "y") return;
+  /* テキスト欄フォーカス中は各欄のネイティブUndoを優先 */
+  if (e.target.closest("textarea, input")) return;
+  if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+  else { e.preventDefault(); redo(); }
+});
+
+function findScene(id) { return state.scenes.find(s => s.id === id); }
+function findCutLoc(id) {
+  for (let si = 0; si < state.scenes.length; si++) {
+    const ci = state.scenes[si].cuts.findIndex(c => c.id === id);
+    if (ci >= 0) return { si, ci, scene: state.scenes[si], cut: state.scenes[si].cuts[ci] };
+  }
+  return null;
+}
+
+/* ---------------- render ---------------- */
+function render() {
+  boardEl.className = "board tpl-" + state.meta.template;
+  const rows = flattenCuts();
+  const byCut = new Map(rows.map(r => [r.cut.id, r]));
+
+  boardEl.innerHTML = state.scenes.map((scene) => {
+    const sceneFrames = scene.cuts.reduce((a, c) => a + (c.sec > 0 ? secToFrames(c.sec) : 0), 0);
+    const first = scene.cuts.length ? byCut.get(scene.cuts[0].id) : null;
+    const stat = `${scene.cuts.length}カット / ${(sceneFrames / fps()).toFixed(1)}s` +
+      (first ? ` / IN ${framesToTC(first.inF)}` : "");
+    return `
+    <section class="scene ${scene.collapsed ? "collapsed" : ""}" data-scene-id="${scene.id}">
+      <div class="scene-head" data-drag="scene">
+        <span class="handle" title="ドラッグでシーンを移動" aria-hidden="true">⠿</span>
+        <button type="button" class="collapse-btn" data-act="collapse" aria-expanded="${!scene.collapsed}"
+          aria-label="${scene.collapsed ? "シーンを展開" : "シーンを折りたたむ"}">${scene.collapsed ? "▸" : "▾"}</button>
+        <input class="scene-name" value="${esc(scene.name)}" placeholder="シーン名" data-field="sceneName" aria-label="シーン名">
+        <span class="scene-stat">${esc(stat)}</span>
+        <span class="scene-tools">
+          <button type="button" data-act="sceneAddCut">＋コマ</button>
+          <button type="button" data-act="sceneUp" aria-label="シーンを上へ">↑</button>
+          <button type="button" data-act="sceneDown" aria-label="シーンを下へ">↓</button>
+          <button type="button" data-act="sceneDel" aria-label="シーンを削除">削除</button>
+        </span>
+      </div>
+      <div class="cuts" data-scene-id="${scene.id}">
+        ${scene.cuts.map(cut => renderCut(cut, byCut.get(cut.id))).join("")}
+      </div>
+    </section>`;
+  }).join("");
+
+  updateTotals();
+  runChecks();
+  scheduleSave();
+}
+
+function renderCut(cut, row) {
+  const naSec = naEstimateSec(cut.dialog);
+  const naOver = cut.sec > 0 && naSec > cut.sec + 0.001;
+  const naText = cut.dialog ? `NA目安 ${naSec.toFixed(1)}s` : "";
+  return `
+  <article class="cut" data-cut-id="${cut.id}" data-drag="cut">
+    <div class="cut-main">
+      <div class="cut-lead">
+        <span class="handle" title="ドラッグでコマを移動" aria-hidden="true">⠿</span>
+        <span class="cut-no" aria-label="コマ番号">${row ? row.no : "-"}</span>
+        <span class="cut-tools">
+          <button type="button" class="icon-btn" data-act="cutUp" aria-label="コマを上へ" title="上へ">↑</button>
+          <button type="button" class="icon-btn" data-act="cutDown" aria-label="コマを下へ" title="下へ">↓</button>
+          <button type="button" class="icon-btn" data-act="cutDup" aria-label="コマを複製" title="複製">⧉</button>
+          <button type="button" class="icon-btn del" data-act="cutDel" aria-label="コマを削除" title="削除">✕</button>
+        </span>
+      </div>
+      <div class="thumb" data-act="${cut.image ? "editImage" : "pickImage"}" role="button" tabindex="0"
+        aria-label="${cut.image ? "画像を編集（トリミング・回転・拡大縮小）" : "画像をはめ込む（クリックで選択、またはドラッグ&ドロップ）"}">
+        ${cut.image
+          ? `<img src="${cut.image}" alt="コマ ${row ? row.no : ""} の絵コンテ画像">
+             <button type="button" class="thumb-btn tb-edit" data-act="editImage" aria-label="画像を編集" title="編集（トリミング・回転）">✎</button>
+             <button type="button" class="thumb-btn tb-replace" data-act="pickImage" aria-label="画像を差し替え" title="差し替え">⇄</button>
+             <button type="button" class="thumb-btn tb-clear" data-act="clearImage" aria-label="画像を外す" title="外す">✕</button>`
+          : `<span class="thumb-hint">画像をドロップ<br>またはクリックで選択<br><span style="color:var(--line-strong)">（Gemini白黒シルエット）</span></span>`}
+      </div>
+      <div class="field f-content">
+        <label>カット内容</label>
+        <textarea data-field="content" placeholder="何が映るか・被写体・動き">${esc(cut.content)}</textarea>
+      </div>
+      <div class="field f-dialog">
+        <label>セリフ・ナレーション <span class="na-est ${naOver ? "over" : ""}">${naText}${naOver ? " ⚠尺超過" : ""}</span></label>
+        <textarea data-field="dialog" placeholder="NA原稿・セリフ・テロップ">${esc(cut.dialog)}</textarea>
+      </div>
+      <div class="field f-camera">
+        <label>カメラワーク</label>
+        <textarea data-field="camera" placeholder="FIX / PAN / ズームIN 等">${esc(cut.camera)}</textarea>
+      </div>
+      <div class="tc-block">
+        <span class="sec-input">
+          <input type="number" min="0" step="0.1" data-field="sec" value="${cut.sec != null ? cut.sec : ""}"
+            class="${cut.sec == null || cut.sec <= 0 ? "missing" : ""}" aria-label="秒数" placeholder="0.0">
+          <span class="unit">秒</span>
+        </span>
+        <span class="tc-io">IN&nbsp;&nbsp;<b data-tc="in">${row ? framesToTC(row.inF) : "--:--:--"}</b><br>OUT&nbsp;<b data-tc="out">${row ? framesToTC(row.outF) : "--:--:--"}</b></span>
+      </div>
+    </div>
+    <div class="prompt-row ${cut.prompt ? "has-prompt" : ""}">
+      <span class="p-label">Gemini用</span>
+      <span class="p-text">${esc(cut.prompt)}</span>
+      <button type="button" class="icon-btn" data-act="copyPrompt" aria-label="プロンプトをコピー" title="コピー">⎘</button>
+    </div>
+  </article>`;
+}
+
+/* 軽量更新: 通し番号・IN/OUT・合計のみ書き換え（フォーカス維持） */
+function refreshNumbersAndTC() {
+  const rows = flattenCuts();
+  const byCut = new Map(rows.map(r => [r.cut.id, r]));
+  $$(".cut", boardEl).forEach(el => {
+    const r = byCut.get(el.dataset.cutId);
+    if (!r) return;
+    $(".cut-no", el).textContent = r.no;
+    $('[data-tc="in"]', el).textContent = framesToTC(r.inF);
+    $('[data-tc="out"]', el).textContent = framesToTC(r.outF);
+    const secInput = $('[data-field="sec"]', el);
+    if (secInput) secInput.classList.toggle("missing", !(r.cut.sec > 0));
+  });
+  $$(".scene", boardEl).forEach(el => {
+    const scene = findScene(el.dataset.sceneId);
+    if (!scene) return;
+    const sf = scene.cuts.reduce((a, c) => a + (c.sec > 0 ? secToFrames(c.sec) : 0), 0);
+    const first = scene.cuts.length ? byCut.get(scene.cuts[0].id) : null;
+    $(".scene-stat", el).textContent =
+      `${scene.cuts.length}カット / ${(sf / fps()).toFixed(1)}s` + (first ? ` / IN ${framesToTC(first.inF)}` : "");
+  });
+  updateTotals();
+  runChecks();
+  scheduleSave();
+}
+
+function updateTotals() {
+  const tf = totalFrames();
+  const ts = tf / fps();
+  const rows = flattenCuts();
+  $("#totalTC").textContent = framesToTC(tf);
+  $("#totalSec").textContent = `${ts.toFixed(1)} s / ${rows.length} cut`;
+  const target = Number(state.meta.targetSec) || 0;
+  const diff = ts - target;
+  const el = $("#diffValue");
+  el.textContent = (diff >= 0 ? "+" : "−") + Math.abs(diff).toFixed(1) + "s";
+  const note = $("#diffNote");
+  if (target <= 0) { el.className = "dvalue"; note.textContent = "目標未設定"; }
+  else if (Math.abs(diff) < 0.05) { el.className = "dvalue ok"; note.textContent = "目標と一致"; }
+  else if (Math.abs(diff) <= 1) { el.className = "dvalue warn"; note.textContent = diff > 0 ? "僅かに超過" : "僅かに不足"; }
+  else { el.className = "dvalue err"; note.textContent = diff > 0 ? "尺超過" : "尺不足"; }
+}
+
+/* ---------------- 操作（追加・複製・削除・移動） ---------------- */
+function addScene() {
+  pushHistory();
+  state.scenes.push(newScene(`シーン ${state.scenes.length + 1}`));
+  render();
+  toast("シーンを追加しました");
+}
+function addCutToLastScene() {
+  pushHistory();
+  if (!state.scenes.length) state.scenes.push(newScene("シーン 1", []));
+  state.scenes[state.scenes.length - 1].cuts.push(newCut());
+  render();
+}
+function moveArrayItem(arr, from, to) {
+  const [item] = arr.splice(from, 1);
+  arr.splice(to, 0, item);
+}
+
+/* ---------------- イベント委譲（ボード） ---------------- */
+boardEl.addEventListener("click", (e) => {
+  const actEl = e.target.closest("[data-act]");
+  if (!actEl) return;
+  const act = actEl.dataset.act;
+  const sceneEl = e.target.closest(".scene");
+  const cutEl = e.target.closest(".cut");
+  const scene = sceneEl ? findScene(sceneEl.dataset.sceneId) : null;
+
+  if (act === "collapse" && scene) { scene.collapsed = !scene.collapsed; render(); return; }
+  if (act === "sceneAddCut" && scene) { pushHistory(); scene.cuts.push(newCut()); render(); return; }
+  if (act === "sceneDel" && scene) {
+    const n = scene.cuts.length;
+    if (n === 0 || confirm(`シーン「${scene.name || "無名"}」（${n}コマ）を削除しますか？`)) {
+      pushHistory();
+      state.scenes = state.scenes.filter(s => s !== scene);
+      render(); toast("シーンを削除しました（⌘Zで戻せます）");
+    }
+    return;
+  }
+  if ((act === "sceneUp" || act === "sceneDown") && scene) {
+    const i = state.scenes.indexOf(scene);
+    const j = act === "sceneUp" ? i - 1 : i + 1;
+    if (j >= 0 && j < state.scenes.length) { pushHistory(); moveArrayItem(state.scenes, i, j); render(); }
+    return;
+  }
+
+  if (!cutEl) return;
+  const loc = findCutLoc(cutEl.dataset.cutId);
+  if (!loc) return;
+
+  if (act === "cutDup") {
+    pushHistory();
+    const copy = newCut({ ...loc.cut, id: undefined });
+    copy.id = uid();
+    loc.scene.cuts.splice(loc.ci + 1, 0, copy);
+    render(); toast("コマを複製しました");
+  } else if (act === "cutDel") {
+    pushHistory();
+    loc.scene.cuts.splice(loc.ci, 1);
+    render(); toast("コマを削除しました（⌘Zで戻せます）");
+  } else if (act === "cutUp" || act === "cutDown") {
+    /* シーンまたぎの上下移動に対応 */
+    const dir = act === "cutUp" ? -1 : 1;
+    const tj = loc.ci + dir;
+    if (tj >= 0 && tj < loc.scene.cuts.length) {
+      pushHistory();
+      moveArrayItem(loc.scene.cuts, loc.ci, tj);
+    } else {
+      const nsi = loc.si + dir;
+      if (nsi < 0 || nsi >= state.scenes.length) return;
+      pushHistory();
+      loc.scene.cuts.splice(loc.ci, 1);
+      if (dir < 0) state.scenes[nsi].cuts.push(loc.cut);
+      else state.scenes[nsi].cuts.unshift(loc.cut);
+    }
+    render();
+    const moved = $(`.cut[data-cut-id="${loc.cut.id}"]`, boardEl);
+    if (moved) { moved.classList.add("flash"); $('[data-act="' + act + '"]', moved)?.focus(); }
+  } else if (act === "pickImage") {
+    pendingImageCutId = loc.cut.id;
+    $("#imgFileInput").click();
+  } else if (act === "editImage") {
+    openImageEditor(loc.cut.id);
+  } else if (act === "clearImage") {
+    e.stopPropagation();
+    pushHistory();
+    loc.cut.image = null;
+    loc.cut.imageSrc = null;
+    loc.cut.imageTf = null;
+    render();
+  } else if (act === "copyPrompt") {
+    copyText(loc.cut.prompt).then(() => toast("プロンプトをコピーしました"));
+  }
+});
+
+/* 画像ゾーン: キーボード操作 */
+boardEl.addEventListener("keydown", (e) => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches('.thumb[data-act="pickImage"]')) {
+    e.preventDefault();
+    e.target.click();
+  }
+});
+
+/* 入力（テキスト・秒数）はフォーカスを保つため軽量更新 */
+boardEl.addEventListener("input", (e) => {
+  const field = e.target.dataset.field;
+  if (!field) return;
+  const sceneEl = e.target.closest(".scene");
+  if (field === "sceneName") {
+    const scene = findScene(sceneEl.dataset.sceneId);
+    if (scene) { pushHistory("sceneName:" + scene.id); scene.name = e.target.value; scheduleSave(); }
+    return;
+  }
+  const cutEl = e.target.closest(".cut");
+  const loc = cutEl ? findCutLoc(cutEl.dataset.cutId) : null;
+  if (!loc) return;
+  if (field === "sec") {
+    pushHistory("sec:" + loc.cut.id);
+    const v = e.target.value === "" ? null : Math.max(0, Number(e.target.value));
+    loc.cut.sec = (v == null || isNaN(v)) ? null : v;
+    refreshNumbersAndTC();
+  } else {
+    pushHistory(field + ":" + loc.cut.id);
+    loc.cut[field] = e.target.value;
+    if (field === "dialog") {
+      /* NA目安をインライン更新 */
+      const est = naEstimateSec(loc.cut.dialog);
+      const naEl = $(".f-dialog .na-est", cutEl);
+      if (naEl) {
+        const over = loc.cut.sec > 0 && est > loc.cut.sec + 0.001;
+        naEl.textContent = loc.cut.dialog ? `NA目安 ${est.toFixed(1)}s${over ? " ⚠尺超過" : ""}` : "";
+        naEl.classList.toggle("over", over);
+      }
+      runChecks();
+    }
+    scheduleSave();
+  }
+});
+
+/* ---------------- ドラッグ&ドロップ（コマ / シーン 並べ替え） ---------------- */
+let dragData = null; /* {type:"cut"|"scene", id} */
+let pendingImageCutId = null;
+
+/* ハンドル（⠿）を掴んだときだけドラッグ可能にする。
+   テキスト入力欄でのドラッグ選択（特に右→左）が行移動と衝突しないように、
+   行・シーン本体は常時 draggable=false としておく。 */
+boardEl.addEventListener("pointerdown", (e) => {
+  const handle = e.target.closest(".handle");
+  if (!handle) return;
+  const dragEl = handle.closest("[data-drag]");
+  if (dragEl) dragEl.draggable = true;
+});
+function resetDraggables() {
+  $$("[data-drag]", boardEl).forEach(el => { el.draggable = false; });
+}
+document.addEventListener("pointerup", resetDraggables);
+document.addEventListener("pointercancel", resetDraggables);
+
+boardEl.addEventListener("dragstart", (e) => {
+  const el = e.target.closest('[data-drag]');
+  if (!el) return;
+  const type = el.dataset.drag;
+  if (type === "cut") {
+    const cutEl = e.target.closest(".cut");
+    dragData = { type: "cut", id: cutEl.dataset.cutId };
+    cutEl.classList.add("dragging");
+  } else {
+    const sceneEl = e.target.closest(".scene");
+    dragData = { type: "scene", id: sceneEl.dataset.sceneId };
+    sceneEl.style.opacity = ".4";
+  }
+  e.dataTransfer.effectAllowed = "move";
+  try { e.dataTransfer.setData("text/plain", dragData.id); } catch (err) {}
+});
+boardEl.addEventListener("dragend", () => {
+  dragData = null;
+  clearDropIndicators();
+  resetDraggables();
+  $$(".cut.dragging", boardEl).forEach(el => el.classList.remove("dragging"));
+  $$(".scene", boardEl).forEach(el => { el.style.opacity = ""; el.classList.remove("drag-over-scene"); });
+});
+function clearDropIndicators() {
+  $$(".drop-indicator", boardEl).forEach(el => el.remove());
+}
+function showCutIndicator(container, beforeEl) {
+  clearDropIndicators();
+  const ind = document.createElement("div");
+  ind.className = "drop-indicator";
+  if (beforeEl) container.insertBefore(ind, beforeEl);
+  else container.appendChild(ind);
+}
+boardEl.addEventListener("dragover", (e) => {
+  if (!dragData) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+
+  if (dragData.type === "cut") {
+    const cutsEl = e.target.closest(".cuts");
+    if (!cutsEl) { clearDropIndicators(); return; }
+    const overCut = e.target.closest(".cut");
+    if (overCut && overCut.dataset.cutId !== dragData.id) {
+      const rect = overCut.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height / 2;
+      showCutIndicator(cutsEl, before ? overCut : overCut.nextElementSibling);
+    } else if (!overCut) {
+      showCutIndicator(cutsEl, null);
+    }
+  } else {
+    const sceneEl = e.target.closest(".scene");
+    $$(".scene", boardEl).forEach(el => el.classList.remove("drag-over-scene"));
+    if (sceneEl && sceneEl.dataset.sceneId !== dragData.id) sceneEl.classList.add("drag-over-scene");
+  }
+});
+boardEl.addEventListener("drop", (e) => {
+  if (!dragData) return;
+  e.preventDefault();
+
+  if (dragData.type === "cut") {
+    const cutsEl = e.target.closest(".cuts");
+    if (!cutsEl) { clearDropIndicators(); return; }
+    const targetScene = findScene(cutsEl.dataset.sceneId);
+    const src = findCutLoc(dragData.id);
+    if (!targetScene || !src) return;
+
+    /* 挿入位置 = インジケータ位置から算出 */
+    const ind = $(".drop-indicator", cutsEl);
+    let insertIndex = targetScene.cuts.length;
+    if (ind) {
+      const cutEls = $$(".cut", cutsEl);
+      insertIndex = 0;
+      for (const el of cutEls) {
+        if (ind.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING) insertIndex++;
+      }
+    }
+    /* 元位置から除去（同一シーン内で前方から抜くとindexがずれるため補正） */
+    pushHistory();
+    src.scene.cuts.splice(src.ci, 1);
+    if (src.scene === targetScene && src.ci < insertIndex) insertIndex--;
+    insertIndex = Math.max(0, Math.min(insertIndex, targetScene.cuts.length));
+    targetScene.cuts.splice(insertIndex, 0, src.cut);
+    render();
+    const moved = $(`.cut[data-cut-id="${src.cut.id}"]`, boardEl);
+    if (moved) moved.classList.add("flash");
+  } else {
+    const sceneEl = e.target.closest(".scene");
+    if (!sceneEl || sceneEl.dataset.sceneId === dragData.id) return;
+    const from = state.scenes.findIndex(s => s.id === dragData.id);
+    const to = state.scenes.findIndex(s => s.id === sceneEl.dataset.sceneId);
+    if (from < 0 || to < 0) return;
+    pushHistory();
+    moveArrayItem(state.scenes, from, to);
+    render();
+  }
+  dragData = null;
+  clearDropIndicators();
+});
+
+/* ---------------- 画像はめ込み ---------------- */
+const MAX_IMG_W = 800;
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, MAX_IMG_W / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.85));
+      };
+      img.onerror = () => reject(new Error("画像を読み込めませんでした"));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("ファイルを読み込めませんでした"));
+    reader.readAsDataURL(file);
+  });
+}
+$("#imgFileInput").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file || !pendingImageCutId) return;
+  try {
+    const url = await fileToDataURL(file);
+    const loc = findCutLoc(pendingImageCutId);
+    if (loc) { pushHistory(); loc.cut.image = url; loc.cut.imageSrc = url; loc.cut.imageTf = null; render(); }
+  } catch (err) { toast(err.message, true); }
+  pendingImageCutId = null;
+});
+/* サムネへの直接ドロップ */
+boardEl.addEventListener("dragover", (e) => {
+  const thumb = e.target.closest(".thumb");
+  if (thumb && !dragData && e.dataTransfer.types.includes("Files")) {
+    e.preventDefault();
+    thumb.classList.add("dragover");
+  }
+});
+boardEl.addEventListener("dragleave", (e) => {
+  const thumb = e.target.closest(".thumb");
+  if (thumb) thumb.classList.remove("dragover");
+});
+boardEl.addEventListener("drop", async (e) => {
+  const thumb = e.target.closest(".thumb");
+  if (!thumb || dragData) return;
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith("image/")) return;
+  e.preventDefault();
+  thumb.classList.remove("dragover");
+  const cutEl = thumb.closest(".cut");
+  const loc = findCutLoc(cutEl.dataset.cutId);
+  if (!loc) return;
+  try {
+    const url = await fileToDataURL(file);
+    pushHistory();
+    loc.cut.image = url; loc.cut.imageSrc = url; loc.cut.imageTf = null;
+    render();
+  } catch (err) { toast(err.message, true); }
+});
+
+/* ============================================================
+   画像エディタ（トリミング・拡大縮小・回転 / 非破壊・再編集可）
+   枠内=コマに表示される範囲（WYSIWYG）。元画像(imageSrc)と
+   変形(imageTf)を保持し、表示用(image)へレンダリングする。
+   ============================================================ */
+const IMGED = { W: 640, H: 360, OUT_W: 800, OUT_H: 450 };
+let imged = null; /* {cutId, img, srcURL, tf} */
+let imgedDrag = null;
+const imgedCanvas = $("#imgedCanvas");
+const defaultTf = () => ({ x: 0, y: 0, scale: 1, rotBase: 0, rotFine: 0 });
+const imgedFit = (img) => Math.min(IMGED.W / img.width, IMGED.H / img.height);
+
+function openImageEditor(cutId) {
+  const loc = findCutLoc(cutId);
+  if (!loc || !loc.cut.image) return;
+  const src = loc.cut.imageSrc || loc.cut.image;
+  const img = new Image();
+  img.onload = () => {
+    imged = {
+      cutId, img, srcURL: src,
+      tf: loc.cut.imageTf ? JSON.parse(JSON.stringify(loc.cut.imageTf)) : defaultTf()
+    };
+    syncImgedControls();
+    drawImged();
+    $("#imgedBackdrop").classList.add("open");
+    $("#imgedZoom").focus();
+  };
+  img.onerror = () => toast("画像を読み込めませんでした", true);
+  img.src = src;
+}
+function closeImageEditor() {
+  $("#imgedBackdrop").classList.remove("open");
+  imged = null; imgedDrag = null;
+}
+function drawImged() {
+  if (!imged) return;
+  const ctx = imgedCanvas.getContext("2d");
+  const t = imged.tf;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, IMGED.W, IMGED.H);
+  ctx.save();
+  ctx.translate(IMGED.W / 2 + t.x, IMGED.H / 2 + t.y);
+  ctx.rotate((t.rotBase + t.rotFine) * Math.PI / 180);
+  const s = t.scale * imgedFit(imged.img);
+  ctx.scale(s, s);
+  ctx.drawImage(imged.img, -imged.img.width / 2, -imged.img.height / 2);
+  ctx.restore();
+  /* 三分割ガイド */
+  ctx.strokeStyle = "rgba(15,76,129,.28)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 3; i++) {
+    ctx.beginPath(); ctx.moveTo(IMGED.W * i / 3, 0); ctx.lineTo(IMGED.W * i / 3, IMGED.H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, IMGED.H * i / 3); ctx.lineTo(IMGED.W, IMGED.H * i / 3); ctx.stroke();
+  }
+}
+function syncImgedControls() {
+  if (!imged) return;
+  const t = imged.tf;
+  $("#imgedZoom").value = Math.round(t.scale * 100);
+  $("#imgedZoomVal").textContent = Math.round(t.scale * 100) + "%";
+  $("#imgedRotFine").value = t.rotFine;
+  const total = t.rotBase + t.rotFine;
+  $("#imgedRotVal").textContent = (Math.round(total * 10) / 10) + "°";
+}
+
+/* ドラッグで位置調整（Pointer Events / タッチ対応） */
+imgedCanvas.addEventListener("pointerdown", (e) => {
+  if (!imged) return;
+  e.preventDefault();
+  imgedCanvas.setPointerCapture(e.pointerId);
+  imgedDrag = { x: e.clientX, y: e.clientY, tx: imged.tf.x, ty: imged.tf.y };
+  imgedCanvas.classList.add("grabbing");
+});
+imgedCanvas.addEventListener("pointermove", (e) => {
+  if (!imged || !imgedDrag) return;
+  const r = imgedCanvas.getBoundingClientRect();
+  const k = IMGED.W / r.width; /* 表示縮尺→内部座標 */
+  imged.tf.x = imgedDrag.tx + (e.clientX - imgedDrag.x) * k;
+  imged.tf.y = imgedDrag.ty + (e.clientY - imgedDrag.y) * k;
+  drawImged();
+});
+["pointerup", "pointercancel"].forEach(ev =>
+  imgedCanvas.addEventListener(ev, () => { imgedDrag = null; imgedCanvas.classList.remove("grabbing"); }));
+/* ホイールで拡大縮小 */
+imgedCanvas.addEventListener("wheel", (e) => {
+  if (!imged) return;
+  e.preventDefault();
+  imged.tf.scale = Math.min(4, Math.max(0.2, imged.tf.scale * Math.pow(1.1, -e.deltaY / 100)));
+  syncImgedControls();
+  drawImged();
+}, { passive: false });
+
+$("#imgedZoom").addEventListener("input", (e) => {
+  if (!imged) return;
+  imged.tf.scale = Number(e.target.value) / 100;
+  syncImgedControls(); drawImged();
+});
+$("#imgedRotFine").addEventListener("input", (e) => {
+  if (!imged) return;
+  imged.tf.rotFine = Number(e.target.value);
+  syncImgedControls(); drawImged();
+});
+$("#imgedRotL").addEventListener("click", () => {
+  if (!imged) return;
+  imged.tf.rotBase = (imged.tf.rotBase - 90) % 360;
+  syncImgedControls(); drawImged();
+});
+$("#imgedRotR").addEventListener("click", () => {
+  if (!imged) return;
+  imged.tf.rotBase = (imged.tf.rotBase + 90) % 360;
+  syncImgedControls(); drawImged();
+});
+$("#imgedReset").addEventListener("click", () => {
+  if (!imged) return;
+  imged.tf = defaultTf();
+  syncImgedControls(); drawImged();
+});
+$("#imgedCancel").addEventListener("click", closeImageEditor);
+$("#btnImgedClose").addEventListener("click", closeImageEditor);
+$("#imgedBackdrop").addEventListener("click", (e) => { if (e.target === $("#imgedBackdrop")) closeImageEditor(); });
+
+/* 適用: 枠内をコマ用画像(16:9)としてレンダリング */
+$("#imgedApply").addEventListener("click", () => {
+  if (!imged) return;
+  const loc = findCutLoc(imged.cutId);
+  if (!loc) { closeImageEditor(); return; }
+  try {
+    const out = document.createElement("canvas");
+    out.width = IMGED.OUT_W; out.height = IMGED.OUT_H;
+    const k = IMGED.OUT_W / IMGED.W;
+    const ctx = out.getContext("2d");
+    const t = imged.tf;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.translate(out.width / 2 + t.x * k, out.height / 2 + t.y * k);
+    ctx.rotate((t.rotBase + t.rotFine) * Math.PI / 180);
+    const s = t.scale * imgedFit(imged.img) * k;
+    ctx.scale(s, s);
+    ctx.drawImage(imged.img, -imged.img.width / 2, -imged.img.height / 2);
+    pushHistory();
+    loc.cut.imageSrc = imged.srcURL;
+    loc.cut.imageTf = JSON.parse(JSON.stringify(t));
+    loc.cut.image = out.toDataURL("image/jpeg", 0.85);
+    closeImageEditor();
+    render();
+    toast("画像を編集しました（再編集可）");
+  } catch (err) {
+    toast("編集の適用に失敗: " + err.message, true);
+  }
+});
+
+/* ---------------- クリップボード ---------------- */
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); ta.remove();
+  }
+}
+
+/* ============================================================
+   エラーチェック（エラー / 警告 / OK）
+   ============================================================ */
+let lastCheckResults = [];
+
+function runChecks() {
+  const results = [];
+  const rows = flattenCuts();
+  const target = Number(state.meta.targetSec) || 0;
+  const ts = totalSeconds();
+
+  /* 1. 尺の不整合 */
+  if (target > 0) {
+    const diff = ts - target;
+    if (Math.abs(diff) < 0.05) {
+      results.push({ level: "ok", title: "合計尺は目標尺と一致", detail: `合計 ${ts.toFixed(1)}s / 目標 ${target}s`, loc: "全体" });
+    } else {
+      results.push({
+        level: Math.abs(diff) <= 1 ? "warn" : "err",
+        title: `合計尺が目標より ${Math.abs(diff).toFixed(1)}秒 ${diff > 0 ? "超過" : "不足"}`,
+        detail: `合計 ${ts.toFixed(1)}s / 目標 ${target}s（差分 ${diff > 0 ? "+" : "−"}${Math.abs(diff).toFixed(1)}s）`,
+        loc: "全体"
+      });
+    }
+  } else {
+    results.push({ level: "warn", title: "目標尺が未設定", detail: "上部バーで目標尺（例: 15 / 30 / 60秒）を設定してください", loc: "全体" });
+  }
+
+  /* 2. タイムコードずれ（前コマOUTと次コマINの不連続） */
+  let tcOK = true;
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i].inF !== rows[i - 1].outF) {
+      tcOK = false;
+      results.push({
+        level: "err",
+        title: `タイムコード不連続: #${rows[i - 1].no} OUT と #${rows[i].no} IN`,
+        detail: `#${rows[i - 1].no} OUT ${framesToTC(rows[i - 1].outF)} ≠ #${rows[i].no} IN ${framesToTC(rows[i].inF)}`,
+        loc: `コマ #${rows[i].no}`, cutId: rows[i].cut.id
+      });
+    }
+  }
+  if (tcOK && rows.length > 1) {
+    results.push({ level: "ok", title: "タイムコードは連続しています", detail: `全${rows.length}コマ IN-OUT 連続`, loc: "全体" });
+  }
+
+  /* 3. ナレーション尺オーバー */
+  let naIssue = false;
+  rows.forEach(r => {
+    if (!r.cut.dialog) return;
+    const est = naEstimateSec(r.cut.dialog);
+    if (r.cut.sec > 0 && est > r.cut.sec + 0.001) {
+      naIssue = true;
+      results.push({
+        level: "warn",
+        title: `#${r.no} ナレーションがコマ尺を超過`,
+        detail: `原稿${naCharCount(r.cut.dialog)}文字 ≒ ${est.toFixed(1)}s（係数 ${state.meta.naRate}文字/秒） > コマ尺 ${r.cut.sec}s`,
+        loc: `コマ #${r.no}`, cutId: r.cut.id
+      });
+    }
+  });
+  if (!naIssue && rows.some(r => r.cut.dialog)) {
+    results.push({ level: "ok", title: "ナレーション尺は全コマ収まっています", detail: `推定係数 ${state.meta.naRate}文字/秒`, loc: "全体" });
+  }
+
+  /* 4. 未入力チェック */
+  rows.forEach(r => {
+    if (!(r.cut.sec > 0)) {
+      results.push({ level: "err", title: `#${r.no} 秒数が未入力`, detail: "秒数が未入力または0のため、IN-OUTが確定しません", loc: `コマ #${r.no}`, cutId: r.cut.id });
+    }
+    if (!r.cut.image) {
+      results.push({ level: "warn", title: `#${r.no} 画像が未はめ込み`, detail: "Gemini生成の白黒シルエット画像をはめ込んでください", loc: `コマ #${r.no}`, cutId: r.cut.id });
+    }
+    if (!r.cut.content.trim()) {
+      results.push({ level: "warn", title: `#${r.no} カット内容が未入力`, detail: "何が映るカットかを記入してください", loc: `コマ #${r.no}`, cutId: r.cut.id });
+    }
+  });
+  if (rows.length === 0) {
+    results.push({ level: "err", title: "コマがありません", detail: "「＋コマ追加」から作成してください", loc: "全体" });
+  }
+  if (!results.some(r => r.level !== "ok")) {
+    results.push({ level: "ok", title: "提出前チェック: 問題なし", detail: "全項目クリア。PDF書き出しに進めます", loc: "全体" });
+  }
+
+  lastCheckResults = results;
+  const issueCount = results.filter(r => r.level !== "ok").length;
+  const badge = $("#checkBadge");
+  badge.textContent = issueCount;
+  badge.classList.toggle("zero", issueCount === 0);
+  if ($("#checkPanel").classList.contains("open")) renderCheckPanel();
+  return results;
+}
+
+function renderCheckPanel() {
+  const list = $("#checkList");
+  const order = { err: 0, warn: 1, ok: 2 };
+  const sorted = [...lastCheckResults].sort((a, b) => order[a.level] - order[b.level]);
+  const tag = { err: "エラー", warn: "警告", ok: "OK" };
+  list.innerHTML = sorted.map((r, i) => `
+    <div class="check-item ${r.level}" data-check-index="${lastCheckResults.indexOf(r)}"
+      ${r.cutId ? `data-jump="${r.cutId}"` : ""} role="button" tabindex="0">
+      <span class="ci-tag">${tag[r.level]}</span>　<b>${esc(r.title)}</b><br>
+      <span>${esc(r.detail)}</span><br>
+      <span class="ci-loc">${esc(r.loc)}</span>
+    </div>`).join("");
+  const c = (lv) => lastCheckResults.filter(r => r.level === lv).length;
+  $("#checkSummary").innerHTML =
+    `<span class="s-err">エラー ${c("err")}</span><span class="s-warn">警告 ${c("warn")}</span><span class="s-ok">OK ${c("ok")}</span>`;
+}
+
+$("#checkList").addEventListener("click", (e) => jumpFromCheck(e));
+$("#checkList").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jumpFromCheck(e); }
+});
+function jumpFromCheck(e) {
+  const item = e.target.closest("[data-jump]");
+  if (!item) return;
+  const cutEl = $(`.cut[data-cut-id="${item.dataset.jump}"]`, boardEl);
+  if (!cutEl) return;
+  /* 折りたたまれたシーン内なら展開 */
+  const sceneEl = cutEl.closest(".scene");
+  const scene = findScene(sceneEl.dataset.sceneId);
+  if (scene && scene.collapsed) { scene.collapsed = false; render(); }
+  closeCheckPanel();
+  const targetEl = $(`.cut[data-cut-id="${item.dataset.jump}"]`, boardEl);
+  targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  targetEl.classList.add("flash");
+  setTimeout(() => targetEl.classList.remove("flash"), 1300);
+}
+
+function openCheckPanel() {
+  runChecks();
+  renderCheckPanel();
+  $("#checkPanel").classList.add("open");
+  $("#checkBackdrop").classList.add("open");
+}
+function closeCheckPanel() {
+  $("#checkPanel").classList.remove("open");
+  $("#checkBackdrop").classList.remove("open");
+}
+$("#btnCheck").addEventListener("click", openCheckPanel);
+$("#btnCheckClose").addEventListener("click", closeCheckPanel);
+$("#checkBackdrop").addEventListener("click", closeCheckPanel);
+$("#naRate").addEventListener("input", (e) => {
+  const v = Number(e.target.value);
+  if (v >= 1 && v <= 15) { state.meta.naRate = v; render(); renderCheckPanel(); }
+});
+
+/* ============================================================
+   上部バー（メタ情報・fps・目標尺・テンプレート・メニュー）
+   ============================================================ */
+[["projTitle", "title"], ["projClient", "client"], ["projAuthor", "author"], ["projDate", "date"]].forEach(([id, key]) => {
+  $("#" + id).addEventListener("input", (e) => { state.meta[key] = e.target.value; scheduleSave(); });
+});
+$("#targetSec").addEventListener("input", (e) => {
+  pushHistory("targetSec");
+  state.meta.targetSec = Math.max(0, Number(e.target.value) || 0);
+  updateTotals(); runChecks(); scheduleSave();
+});
+$$(".preset-btns button").forEach(btn => btn.addEventListener("click", () => {
+  pushHistory();
+  state.meta.targetSec = Number(btn.dataset.preset);
+  $("#targetSec").value = state.meta.targetSec;
+  updateTotals(); runChecks(); scheduleSave();
+}));
+$("#fpsSelect").addEventListener("change", (e) => {
+  pushHistory();
+  state.meta.fps = Number(e.target.value);
+  render();
+  toast(`フレームレートを ${state.meta.fps}fps に変更（IN-OUT再計算済み）`);
+});
+$$(".seg [data-tpl]").forEach(btn => btn.addEventListener("click", () => {
+  state.meta.template = btn.dataset.tpl;
+  $$(".seg [data-tpl]").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+  render();
+}));
+$("#btnAddScene").addEventListener("click", addScene);
+$("#btnAddCut").addEventListener("click", addCutToLastScene);
+$("#btnUndo").addEventListener("click", undo);
+$("#btnRedo").addEventListener("click", redo);
+
+/* 書き出しメニュー */
+const exportMenu = $("#exportMenu");
+$("#btnExport").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = exportMenu.classList.toggle("open");
+  $("#btnExport").setAttribute("aria-expanded", String(open));
+});
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".menu-wrap")) {
+    exportMenu.classList.remove("open");
+    $("#btnExport").setAttribute("aria-expanded", "false");
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    exportMenu.classList.remove("open");
+    closeCheckPanel();
+    closeAiModal();
+    closeProjModal();
+    closeHelpModal();
+    closeImageEditor();
+  }
+});
+
+/* ---------------- 使い方ガイド ---------------- */
+function closeHelpModal() { $("#helpBackdrop").classList.remove("open"); }
+$("#btnHelp").addEventListener("click", () => {
+  $("#helpBackdrop").classList.add("open");
+  $("#btnHelpClose").focus();
+});
+$("#btnHelpClose").addEventListener("click", closeHelpModal);
+$("#helpBackdrop").addEventListener("click", (e) => { if (e.target === $("#helpBackdrop")) closeHelpModal(); });
+
+/* ============================================================
+   プロジェクト管理（このブラウザ内に複数保存 / 一覧・複製・削除）
+   ============================================================ */
+function openProjModal() {
+  persistCurrentProject();
+  renderProjectList();
+  $("#projBackdrop").classList.add("open");
+}
+function closeProjModal() { $("#projBackdrop").classList.remove("open"); }
+$("#btnProjects").addEventListener("click", openProjModal);
+$("#btnProjClose").addEventListener("click", closeProjModal);
+$("#projBackdrop").addEventListener("click", (e) => { if (e.target === $("#projBackdrop")) closeProjModal(); });
+
+function fmtDate(iso) {
+  try {
+    const d = new Date(iso);
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  } catch (e) { return ""; }
+}
+function renderProjectList() {
+  const idx = loadIndex();
+  const list = $("#projList");
+  if (!storageOK) {
+    list.innerHTML = `<div class="proj-empty">この環境ではブラウザ内保存を利用できません。<br>「書き出し → JSON保存」でファイル管理してください。</div>`;
+    return;
+  }
+  if (!idx.length) {
+    list.innerHTML = `<div class="proj-empty">保存されたプロジェクトはありません</div>`;
+    return;
+  }
+  list.innerHTML = idx.map(p => `
+    <div class="proj-item ${p.id === currentProjectId ? "current" : ""}" data-proj-id="${p.id}">
+      <div class="pj-info">
+        <div class="pj-title">${esc(p.title)}${p.id === currentProjectId ? '<span class="pj-badge">編集中</span>' : ""}</div>
+        <div class="pj-meta">更新 ${fmtDate(p.updatedAt)} ／ ${p.cutCount}コマ ／ ${p.totalSec}s</div>
+      </div>
+      <div class="pj-tools">
+        ${p.id !== currentProjectId ? `<button type="button" class="btn primary" data-pact="open">開く</button>` : ""}
+        <button type="button" class="btn" data-pact="dup">複製</button>
+        <button type="button" class="btn" data-pact="rename">名前変更</button>
+        <button type="button" class="btn danger" data-pact="del">削除</button>
+      </div>
+    </div>`).join("");
+}
+
+$("#projList").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-pact]");
+  if (!btn) return;
+  const item = e.target.closest(".proj-item");
+  const id = item.dataset.projId;
+  const act = btn.dataset.pact;
+  const idx = loadIndex();
+  const entry = idx.find(p => p.id === id);
+  if (!entry) return;
+
+  if (act === "open") {
+    persistCurrentProject(); /* 現在の作業を保存してから切替 */
+    if (loadProject(id)) {
+      syncMetaInputs(); render(); closeProjModal();
+      toast(`「${entry.title}」を開きました`);
+    } else {
+      toast("読込に失敗しました。データが破損している可能性があります。", true);
+    }
+  } else if (act === "dup") {
+    /* 流用向け複製: 内容を丸ごとコピーして「〜のコピー」として作成・そのまま開く */
+    let src = null;
+    try { src = JSON.parse(localStorage.getItem(LS_PROJ(id))); } catch (err) {}
+    if (!src) { toast("複製元を読み込めませんでした", true); return; }
+    persistCurrentProject();
+    src.meta.title = (src.meta.title || "無題プロジェクト") + " のコピー";
+    src.meta.date = new Date().toISOString().slice(0, 10);
+    state = src;
+    currentProjectId = uid();
+    clearHistory();
+    persistCurrentProject();
+    syncMetaInputs(); render(); renderProjectList();
+    toast(`複製しました: ${state.meta.title}`);
+  } else if (act === "rename") {
+    const name = prompt("新しいプロジェクト名", entry.title);
+    if (name == null || !name.trim()) return;
+    entry.title = name.trim();
+    saveIndex(idx);
+    if (id === currentProjectId) {
+      state.meta.title = entry.title;
+      syncMetaInputs();
+      persistCurrentProject();
+    } else {
+      try {
+        const p = JSON.parse(localStorage.getItem(LS_PROJ(id)));
+        if (p) { p.meta.title = entry.title; localStorage.setItem(LS_PROJ(id), JSON.stringify(p)); }
+      } catch (err) {}
+    }
+    renderProjectList();
+  } else if (act === "del") {
+    if (!confirm(`「${entry.title}」を削除しますか？（元に戻せません。必要ならJSON保存で退避してください）`)) return;
+    try { localStorage.removeItem(LS_PROJ(id)); } catch (err) {}
+    saveIndex(idx.filter(p => p.id !== id));
+    if (id === currentProjectId) {
+      /* 編集中を削除した場合: 残りの先頭を開く / なければ新規 */
+      currentProjectId = null;
+      const rest = loadIndex();
+      let opened = false;
+      for (const p of rest) { if (loadProject(p.id)) { opened = true; break; } }
+      if (!opened) {
+        state = { meta: { ...state.meta, title: "", client: "", author: "", date: new Date().toISOString().slice(0, 10) }, scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])] };
+        currentProjectId = uid();
+        clearHistory();
+        persistCurrentProject();
+      }
+      syncMetaInputs(); render();
+    }
+    renderProjectList();
+    toast("削除しました");
+  }
+});
+
+$("#btnProjNew").addEventListener("click", () => {
+  createProjectFromState({
+    meta: { ...state.meta, title: "", client: state.meta.client, author: state.meta.author, date: new Date().toISOString().slice(0, 10) },
+    scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])]
+  });
+  syncMetaInputs(); render(); renderProjectList(); closeProjModal();
+});
+
+let jsonLoadMode = "replace"; /* replace: 現在へ読込 / import: 新規プロジェクトとして取込 */
+$("#btnProjImport").addEventListener("click", () => {
+  jsonLoadMode = "import";
+  $("#jsonFileInput").click();
+});
+
+/* ============================================================
+   AI連携（運用モデル: claude-opus-4-8 / Anthropic API）
+   APIキーはブラウザ内のみで保持。コード・ファイルへは保存しない。
+   ============================================================ */
+const AI_MODEL = "claude-opus-4-8";
+const AI_ENDPOINT = "https://api.anthropic.com/v1/messages";
+
+function openAiModal() {
+  $("#aiBackdrop").classList.add("open");
+  $("#aiTargetSec").value = state.meta.targetSec || 30;
+  /* 保持済みキーの復元 */
+  if (storageOK) {
+    try {
+      const saved = localStorage.getItem(LS_API);
+      if (saved && !$("#apiKey").value) { $("#apiKey").value = saved; $("#apiKeyRemember").checked = true; }
+    } catch (e) {}
+  }
+  $("#apiKey").focus();
+}
+function closeAiModal() { $("#aiBackdrop").classList.remove("open"); }
+$("#btnAI").addEventListener("click", openAiModal);
+$("#btnAiClose").addEventListener("click", closeAiModal);
+$("#aiBackdrop").addEventListener("click", (e) => { if (e.target === $("#aiBackdrop")) closeAiModal(); });
+
+$("#apiKeyRemember").addEventListener("change", (e) => {
+  if (!storageOK) {
+    if (e.target.checked) { toast("この環境ではブラウザ保存を利用できません（セッション中のみ保持）", true); e.target.checked = false; }
+    return;
+  }
+  try {
+    if (e.target.checked) localStorage.setItem(LS_API, $("#apiKey").value);
+    else localStorage.removeItem(LS_API);
+  } catch (err) {}
+});
+$("#apiKey").addEventListener("input", () => {
+  if ($("#apiKeyRemember").checked && storageOK) {
+    try { localStorage.setItem(LS_API, $("#apiKey").value); } catch (e) {}
+  }
+});
+
+/* タブ切替 */
+[["tabDraft", "paneDraft"], ["tabPrompt", "panePrompt"]].forEach(([tabId, paneId]) => {
+  $("#" + tabId).addEventListener("click", () => {
+    $$(".tabs [role=tab]").forEach(t => t.setAttribute("aria-selected", String(t.id === tabId)));
+    $$(".tabpane").forEach(p => p.classList.toggle("active", p.id === paneId));
+  });
+});
+
+function setStatus(el, type, msg) {
+  el.className = "ai-status " + (type || "");
+  el.innerHTML = msg || "";
+}
+
+/* API呼び出し共通 */
+async function callClaude(systemPrompt, userPrompt, maxTokens) {
+  const key = $("#apiKey").value.trim();
+  if (!key) throw new Error("APIキーを入力してください。");
+  let res;
+  try {
+    res = await fetch(AI_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: maxTokens || 8000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
+      })
+    });
+  } catch (e) {
+    throw new Error("通信に失敗しました。ネットワーク接続を確認してください。\n" + e.message);
+  }
+  if (!res.ok) {
+    let detail = "";
+    try { const j = await res.json(); detail = (j.error && j.error.message) || JSON.stringify(j); } catch (e) {}
+    if (res.status === 401) throw new Error("認証エラー（401）: APIキーが正しくありません。");
+    if (res.status === 429) throw new Error("レート制限（429）: 少し待ってから再実行してください。");
+    if (res.status === 529) throw new Error("APIが混雑しています（529）: 時間をおいて再実行してください。");
+    throw new Error(`APIエラー（${res.status}）: ${detail}`);
+  }
+  const data = await res.json();
+  const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+  if (!text) throw new Error("APIから空の応答が返されました。");
+  return text;
+}
+
+/* JSONフェンス除去 + 安全パース */
+function safeParseJSON(raw) {
+  let s = String(raw).trim();
+  s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+  /* 前置きが混ざった場合に備え、最初の { or [ から末尾の対応括弧までを抽出 */
+  const start = Math.min(...["{", "["].map(ch => { const i = s.indexOf(ch); return i < 0 ? Infinity : i; }));
+  if (start === Infinity) throw new Error("応答にJSONが含まれていません。");
+  const open = s[start];
+  const close = open === "{" ? "}" : "]";
+  const end = s.lastIndexOf(close);
+  if (end <= start) throw new Error("JSONの括弧が閉じていません。");
+  try {
+    return JSON.parse(s.slice(start, end + 1));
+  } catch (e) {
+    throw new Error("JSONの解析に失敗しました: " + e.message + "\n---応答冒頭---\n" + s.slice(0, 300));
+  }
+}
+
+/* ---- ①企画テキスト → 絵コンテ下書き ---- */
+$("#btnGenDraft").addEventListener("click", async () => {
+  const status = $("#draftStatus");
+  const plan = $("#planText").value.trim();
+  if (!plan) { setStatus(status, "error", "企画テキストを入力してください。"); return; }
+  const targetSec = Number($("#aiTargetSec").value) || state.meta.targetSec || 30;
+  const cutCount = Number($("#aiCutCount").value) || 0;
+  const btn = $("#btnGenDraft");
+  btn.disabled = true;
+  setStatus(status, "info", '<span class="spinner"></span>Claude Opus 4.8 で下書きを生成中…（10〜40秒程度）');
+
+  const system = [
+    "あなたは映像制作会社のベテラン演出家です。企画テキストから絵コンテの下書きを設計します。",
+    "出力はJSONのみ。前置き・説明・コードフェンスは一切出力しないこと。",
+    "秒数配分の合計は指定の目標尺に一致させること（小数1桁まで可）。",
+    "カメラワークは FIX / PAN / TILT / ズームIN / ズームOUT / ドリー / 手持ち / 俯瞰 などの実務用語で簡潔に。",
+    "セリフ・ナレーションは日本語で、1秒あたり全角約6文字で読める分量に収めること。"
+  ].join("\n");
+  const user = [
+    `目標尺: ${targetSec}秒 / フレームレート: ${fps()}fps`,
+    cutCount > 0 ? `コマ数: ${cutCount}コマ程度` : "コマ数: 内容に応じて適切に（目安: 5秒前後/コマ）",
+    "",
+    "次のJSONスキーマで出力:",
+    '{"scenes":[{"name":"シーン名","cuts":[{"content":"カット内容","dialog":"セリフ・ナレーション","camera":"カメラワーク","sec":秒数(数値)}]}]}',
+    "",
+    "=== 企画テキスト ===",
+    plan
+  ].join("\n");
+
+  try {
+    const raw = await callClaude(system, user, 8000);
+    const data = safeParseJSON(raw);
+    if (!data || !Array.isArray(data.scenes) || !data.scenes.length) throw new Error("scenes配列が取得できませんでした。");
+    const scenes = data.scenes.map((s, i) => newScene(
+      String(s.name || `シーン ${i + 1}`),
+      (Array.isArray(s.cuts) ? s.cuts : []).map(c => newCut({
+        content: String(c.content || ""),
+        dialog: String(c.dialog || ""),
+        camera: String(c.camera || ""),
+        sec: (typeof c.sec === "number" && c.sec > 0) ? Math.round(c.sec * 10) / 10 : null
+      }))
+    )).filter(s => s.cuts.length);
+    if (!scenes.length) throw new Error("有効なコマが生成されませんでした。");
+
+    const mode = document.querySelector('input[name="applyMode"]:checked').value;
+    if (mode === "replace") {
+      const hasContent = flattenCuts().some(r => r.cut.content || r.cut.dialog || r.cut.image);
+      if (hasContent && !confirm("現在の絵コンテを下書きで置き換えます。よろしいですか？（JSON保存で退避できます）")) {
+        setStatus(status, "info", "反映をキャンセルしました。");
+        btn.disabled = false;
+        return;
+      }
+      pushHistory();
+      state.scenes = scenes;
+    } else {
+      pushHistory();
+      state.scenes.push(...scenes);
+    }
+    render();
+    const total = totalSeconds();
+    setStatus(status, "ok", `反映しました: ${scenes.length}シーン / ${scenes.reduce((a, s) => a + s.cuts.length, 0)}コマ / 合計 ${total.toFixed(1)}s（目標 ${targetSec}s）`);
+    toast("AI下書きをテーブルに反映しました");
+  } catch (e) {
+    setStatus(status, "error", "生成に失敗しました。\n" + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ---- ②Gemini白黒シルエット用プロンプト一括生成 ---- */
+let lastPrompts = [];
+$("#btnGenPrompts").addEventListener("click", async () => {
+  const status = $("#promptStatus");
+  const rows = flattenCuts();
+  const targets = rows.filter(r => r.cut.content.trim());
+  if (!targets.length) { setStatus(status, "error", "カット内容が入力されたコマがありません。先に下書きを作成してください。"); return; }
+  const btn = $("#btnGenPrompts");
+  btn.disabled = true;
+  setStatus(status, "info", `<span class="spinner"></span>${targets.length}コマ分のプロンプトを生成中…`);
+
+  const system = [
+    "あなたは画像生成プロンプトの専門家です。絵コンテの各コマから、Web版Geminiで白黒シルエット画像を生成するための日本語プロンプトを作成します。",
+    "出力はJSONのみ。前置き・説明・コードフェンスは一切出力しないこと。",
+    "各プロンプトの必須要件:",
+    "・「白背景に黒シルエットのみのシンプルなイラスト、絵コンテ用、文字なし」という様式指定を必ず含める",
+    "・被写体・構図・アングル（カメラワークを構図に翻訳）を具体的に記述",
+    "・1コマ = 1プロンプト、80〜150文字程度"
+  ].join("\n");
+  const user = [
+    "以下の各コマについてプロンプトを生成し、次のスキーマで出力:",
+    '[{"no":通し番号,"prompt":"プロンプト文"}]',
+    "",
+    "=== コマ一覧 ===",
+    ...targets.map(r => `#${r.no} 内容:${r.cut.content} / カメラ:${r.cut.camera || "指定なし"} / セリフ:${(r.cut.dialog || "なし").slice(0, 60)}`)
+  ].join("\n");
+
+  try {
+    const raw = await callClaude(system, user, 8000);
+    const data = safeParseJSON(raw);
+    if (!Array.isArray(data) || !data.length) throw new Error("プロンプト配列が取得できませんでした。");
+    const byNo = new Map(targets.map(r => [r.no, r]));
+    let applied = 0;
+    lastPrompts = [];
+    pushHistory();
+    data.forEach(item => {
+      const r = byNo.get(Number(item.no));
+      if (r && item.prompt) {
+        r.cut.prompt = String(item.prompt).trim();
+        lastPrompts.push({ no: r.no, prompt: r.cut.prompt });
+        applied++;
+      }
+    });
+    if (!applied) throw new Error("コマ番号が一致するプロンプトがありませんでした。");
+    render();
+    renderPromptResult();
+    $("#btnCopyAllPrompts").disabled = false;
+    setStatus(status, "ok", `${applied}コマ分のプロンプトを生成し、各コマの下部に反映しました。`);
+  } catch (e) {
+    setStatus(status, "error", "生成に失敗しました。\n" + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+function renderPromptResult() {
+  const box = $("#promptResult");
+  box.classList.add("show");
+  box.innerHTML = `<table>
+    <thead><tr><th>コマ</th><th>Geminiプロンプト</th><th></th></tr></thead>
+    <tbody>${lastPrompts.map((p, i) => `
+      <tr>
+        <td class="p-no">#${p.no}</td>
+        <td>${esc(p.prompt)}</td>
+        <td><button type="button" class="icon-btn" data-copy-index="${i}" aria-label="#${p.no}のプロンプトをコピー" title="コピー">⎘</button></td>
+      </tr>`).join("")}
+    </tbody></table>`;
+}
+$("#promptResult").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-copy-index]");
+  if (!btn) return;
+  const p = lastPrompts[Number(btn.dataset.copyIndex)];
+  if (p) copyText(p.prompt).then(() => toast(`#${p.no} のプロンプトをコピーしました`));
+});
+$("#btnCopyAllPrompts").addEventListener("click", () => {
+  if (!lastPrompts.length) return;
+  copyText(lastPrompts.map(p => `#${p.no}\n${p.prompt}`).join("\n\n"))
+    .then(() => toast("全プロンプトをコピーしました"));
+});
+
+/* ============================================================
+   出力（PDF / CSV / JSON）
+   ============================================================ */
+function downloadBlob(blob, filename) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+}
+const fileBase = () => (state.meta.title || "storyboard").replace(/[\\/:*?"<>|]/g, "_") + "_" + (state.meta.date || new Date().toISOString().slice(0, 10));
+
+/* ---- JSON 保存 / 読込（中断・再開用） ---- */
+$("#btnJsonSave").addEventListener("click", () => {
+  exportMenu.classList.remove("open");
+  const payload = { app: "tsugu-storyboard", version: 1, savedAt: new Date().toISOString(), ...structuredClone(state) };
+  downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), fileBase() + ".json");
+  toast("JSONを保存しました");
+});
+$("#btnJsonLoad").addEventListener("click", () => {
+  exportMenu.classList.remove("open");
+  jsonLoadMode = "replace";
+  $("#jsonFileInput").click();
+});
+$("#jsonFileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || !Array.isArray(data.scenes) || !data.meta) throw new Error("このツールの保存形式ではありません。");
+      const loaded = { meta: { ...state.meta, ...data.meta }, scenes: data.scenes };
+      if (jsonLoadMode === "import") {
+        /* 新規プロジェクトとして取込（現在の作業は保持） */
+        createProjectFromState(loaded, { silent: true });
+        syncMetaInputs(); render(); renderProjectList();
+        toast(`「${state.meta.title || "無題プロジェクト"}」を新規プロジェクトとして取り込みました`);
+      } else {
+        if (!confirm("現在の内容を読み込んだデータで置き換えます。よろしいですか？")) return;
+        pushHistory();
+        state = loaded;
+        syncMetaInputs();
+        render();
+        toast("JSONを読み込みました");
+      }
+    } catch (err) {
+      toast("読込に失敗: " + err.message, true);
+    } finally {
+      jsonLoadMode = "replace";
+    }
+  };
+  reader.onerror = () => toast("ファイルを読み込めませんでした", true);
+  reader.readAsText(file, "utf-8");
+});
+
+/* ---- CSV 書き出し（Vコン工程受け渡し / UTF-8 BOM付・文字化け対策） ---- */
+$("#btnCsv").addEventListener("click", () => {
+  exportMenu.classList.remove("open");
+  const rows = flattenCuts();
+  if (!rows.length) { toast("コマがありません", true); return; }
+  const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const header = ["No", "シーン", "カット内容", "セリフ・ナレーション", "カメラワーク",
+    "秒数", "IN(mm:ss:ff)", "OUT(mm:ss:ff)", "INフレーム", "OUTフレーム", "Gemini画像プロンプト"];
+  const lines = [header.map(q).join(",")];
+  rows.forEach(r => {
+    lines.push([
+      r.no, r.scene.name, r.cut.content, r.cut.dialog, r.cut.camera,
+      r.cut.sec != null ? r.cut.sec : "",
+      framesToTC(r.inF), framesToTC(r.outF), r.inF, r.outF, r.cut.prompt
+    ].map(q).join(","));
+  });
+  /* メタ情報行（末尾コメント行） */
+  lines.push("");
+  lines.push([q("# 作品"), q(state.meta.title), q("目標尺(s)"), q(state.meta.targetSec),
+    q("合計尺(s)"), q(totalSeconds().toFixed(1)), q("fps"), q(fps()), q("書き出し"), q(new Date().toLocaleString("ja-JP"))].join(","));
+  const csv = "\uFEFF" + lines.join("\r\n"); /* BOM + CRLF: Excel/Premiere系での文字化け防止 */
+  downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), fileBase() + "_vcon.csv");
+  toast("Vコン用CSVを書き出しました（UTF-8 BOM）");
+});
+
+/* ---- PDF 書き出し（A4縦・絵コンテ用紙） ---- */
+const PDF_CUTS_PER_PAGE = 4;
+$("#btnPdf").addEventListener("click", async () => {
+  exportMenu.classList.remove("open");
+  const rows = flattenCuts();
+  if (!rows.length) { toast("コマがありません", true); return; }
+  if (!window.jspdf || !window.html2canvas) {
+    toast("PDFライブラリを読み込めていません。ネットワーク接続後にページを再読込してください。", true);
+    return;
+  }
+  const btn = $("#btnPdf");
+  btn.disabled = true;
+  toast("PDFを生成しています…");
+  try {
+    const stage = $("#pdfStage");
+    const pages = [];
+    for (let i = 0; i < rows.length; i += PDF_CUTS_PER_PAGE) pages.push(rows.slice(i, i + PDF_CUTS_PER_PAGE));
+    const totalTC = framesToTC(totalFrames());
+    const ts = totalSeconds().toFixed(1);
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    for (let p = 0; p < pages.length; p++) {
+      stage.innerHTML = `
+      <div class="pdf-page">
+        <div class="pdf-title-block">
+          <div class="pdf-title-cell grow">
+            <div class="pt-label">TITLE / 作品タイトル</div>
+            <div class="pt-value">${esc(state.meta.title || "無題プロジェクト")}</div>
+          </div>
+          <div class="pdf-title-cell">
+            <div class="pt-label">CLIENT</div><div class="pt-value">${esc(state.meta.client || "—")}</div>
+          </div>
+          <div class="pdf-title-cell">
+            <div class="pt-label">担当</div><div class="pt-value">${esc(state.meta.author || "—")}</div>
+          </div>
+          <div class="pdf-title-cell">
+            <div class="pt-label">DATE</div><div class="pt-value">${esc(state.meta.date || "")}</div>
+          </div>
+          <div class="pdf-title-cell">
+            <div class="pt-label">合計尺 / TOTAL</div>
+            <div class="pt-value">${totalTC}（${ts}s / ${fps()}fps）</div>
+          </div>
+        </div>
+        ${pages[p].map(r => `
+        <div class="pdf-cut">
+          <div class="pdf-cut-no"><span class="no">${r.no}</span><span class="sc">${esc(r.scene.name || "")}</span></div>
+          <div class="pdf-cut-img">${r.cut.image ? `<img src="${r.cut.image}" alt="">` : `<span class="noimg">NO IMAGE</span>`}</div>
+          <div class="pdf-cut-fields">
+            <div class="pdf-field"><div class="pf-label">カット内容</div><div class="pf-value">${esc(r.cut.content)}</div></div>
+            <div class="pdf-field"><div class="pf-label">セリフ・ナレーション</div><div class="pf-value">${esc(r.cut.dialog)}</div></div>
+            <div class="pdf-field"><div class="pf-label">カメラワーク</div><div class="pf-value">${esc(r.cut.camera)}</div></div>
+          </div>
+          <div class="pdf-cut-tc">
+            <div class="tc-item"><div class="l">SEC</div><div class="v">${r.cut.sec != null ? r.cut.sec + "s" : "—"}</div></div>
+            <div class="tc-item"><div class="l">IN</div><div class="v">${framesToTC(r.inF)}</div></div>
+            <div class="tc-item"><div class="l">OUT</div><div class="v">${framesToTC(r.outF)}</div></div>
+          </div>
+        </div>`).join("")}
+        <div class="pdf-footer">
+          <span>STORYBOARD — ${esc(state.meta.title || "無題プロジェクト")}</span>
+          <span>${p + 1} / ${pages.length}</span>
+        </div>
+      </div>`;
+
+      const canvas = await window.html2canvas($(".pdf-page", stage), { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      if (p > 0) doc.addPage();
+      doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+    }
+    stage.innerHTML = "";
+    doc.save(fileBase() + "_storyboard.pdf");
+    toast(`PDFを書き出しました（${pages.length}ページ）`);
+  } catch (e) {
+    toast("PDF生成に失敗: " + e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ============================================================
+   初期化
+   ============================================================ */
+function syncMetaInputs() {
+  $("#projTitle").value = state.meta.title || "";
+  $("#projClient").value = state.meta.client || "";
+  $("#projAuthor").value = state.meta.author || "";
+  $("#projDate").value = state.meta.date || "";
+  $("#targetSec").value = state.meta.targetSec;
+  $("#fpsSelect").value = String(state.meta.fps);
+  $("#naRate").value = state.meta.naRate;
+  $$(".seg [data-tpl]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tpl === state.meta.template)));
+}
+
+(function init() {
+  const restored = tryRestore();
+  if (storageOK && !currentProjectId) {
+    /* 初回起動: 現在のstateを最初のプロジェクトとして登録 */
+    currentProjectId = uid();
+    persistCurrentProject();
+  }
+  $("#storageNote").textContent = storageOK
+    ? (restored ? "前回のプロジェクトを自動復元しました（自動保存 有効／「プロジェクト」から一覧・複製）" : "自動保存: 有効（このブラウザ内・「プロジェクト」から一覧管理）")
+    : "この環境では自動保存を利用できません。作業終了時に「書き出し → JSON保存」で保存してください。";
+  syncMetaInputs();
+  render();
+})();
+</script>
+</body>
+</html>
