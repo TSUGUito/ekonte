@@ -390,6 +390,22 @@ img{display:block;max-width:100%}
   font-size:var(--fs-xs);color:var(--ink-2);background:var(--warn-bg);border-left:3px solid var(--warn);
   padding:6px 10px;border-radius:0 3px 3px 0;margin-bottom:8px;
 }
+.help-list{
+  list-style:none;font-size:var(--fs-sm);color:var(--ink-2);
+  padding:8px 12px;margin:0 0 10px;border-left:3px solid var(--line-strong);
+  border-radius:0 3px 3px 0;background:var(--surface-dim);
+}
+.help-list li{padding-left:1.5em;text-indent:-1.5em;margin-bottom:5px;line-height:1.6}
+.help-list li:last-child{margin-bottom:0}
+.help-list li::before{font-weight:700;margin-right:.4em}
+.help-list.ng{border-left-color:var(--err);background:var(--err-bg)}
+.help-list.ng li::before{content:"✕";color:var(--err)}
+.help-list.ok{border-left-color:var(--ok);background:var(--ok-bg)}
+.help-list.ok li::before{content:"○";color:var(--ok)}
+.help-list.tip{border-left-color:var(--accent);background:var(--accent-weak)}
+.help-list.tip li::before{content:"◎";color:var(--accent)}
+.help-listlabel{font-size:var(--fs-sm);font-weight:700;margin:10px 0 4px}
+.help-listlabel.ng{color:var(--err)} .help-listlabel.ok{color:var(--ok)} .help-listlabel.tip{color:var(--accent)}
 
 /* プロジェクト一覧 */
 .proj-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -501,7 +517,7 @@ img{display:block;max-width:100%}
         <span id="tcFormatNote">TC: mm:ss:ff</span>
       </span>
       <span class="spacer"></span>
-      <button type="button" class="btn" id="btnHelp" aria-haspopup="dialog">？ 使い方</button>
+      <button type="button" class="btn" id="btnHelp" aria-haspopup="dialog">？ 使い方と注意事項</button>
       <button type="button" class="btn" id="btnProjects">プロジェクト</button>
       <button type="button" class="btn" id="btnCheck">チェック <span class="badge zero" id="checkBadge">0</span></button>
       <button type="button" class="btn primary" id="btnAI">AI下書き</button>
@@ -638,7 +654,7 @@ img{display:block;max-width:100%}
 <div class="modal-backdrop" id="helpBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="modal-head">
-      <h2 id="helpTitle">使い方</h2>
+      <h2 id="helpTitle">使い方と注意事項</h2>
       <button type="button" class="icon-btn" id="btnHelpClose" aria-label="閉じる">✕</button>
     </div>
     <div class="modal-body help-body">
@@ -664,6 +680,35 @@ img{display:block;max-width:100%}
       <h3>保存とプロジェクト</h3>
       <p>作業は<b>このPCのこのブラウザ内に自動保存</b>され、次回起動時に前回の続きから再開できます。「プロジェクト」ボタンで一覧を開き、新規作成・開く・<b>複製（流用）</b>・名前変更・削除ができます。</p>
       <div class="help-note">ブラウザ内保存の容量には上限（目安5MB）があります。納品済み案件や別PCとの共有は「書き出し → JSON保存」でファイル化し、社内サーバー等で管理してください。JSONは「プロジェクト一覧 → JSONファイルを取込」で新規プロジェクトとして戻せます。</div>
+
+      <h3>注意事項（保存データが消える条件・重要）</h3>
+      <p>作業データはブラウザ内（localStorage）に保存されています。<b>ブラウザ内保存は一時的なもの、JSONファイルが本物の保存</b>と考えてください。</p>
+
+      <div class="help-listlabel ng">データが消える操作（ダメ）</div>
+      <ul class="help-list ng">
+        <li>ブラウザの閲覧データ削除で<b>「Cookieとその他のサイトデータ」</b>を含めて消去する（オンライン版・ローカルHTML版どちらのデータも消えます）</li>
+        <li>「閲覧履歴データを削除」で<b>サイトデータにチェックが入ったまま</b>全期間消去する（上と同じ操作です）</li>
+        <li><b>シークレット／プライベートウィンドウ</b>で使う（ウィンドウを閉じた時点で消えます）</li>
+        <li><b>別のPC・別のブラウザ</b>で開く（そもそも前のデータは入っていません）</li>
+        <li><b>Safariで7日間このツールを使わない</b>（Safariの追跡防止機能により、サイトを7日間操作しないと保存データが自動削除されることがあります。普段使いは<b>Chrome推奨</b>）</li>
+        <li><b>開き方を変える</b>（ローカルのHTMLファイルとして開いた場合と、GitHub公開URLで開いた場合では保存場所が別々です。データは引き継がれません）</li>
+      </ul>
+
+      <div class="help-listlabel ok">データが消えない操作（OK）</div>
+      <ul class="help-list ok">
+        <li><b>「キャッシュされた画像とファイル」だけ</b>を削除する（サイトデータのチェックを外せば安全）</li>
+        <li>ブラウザやMacの<b>再起動</b></li>
+        <li><b>同じPC・同じブラウザ・同じ開き方</b>で開き直す（前回の続きから再開できます）</li>
+      </ul>
+
+      <div class="help-listlabel tip">回避方法（これをやれば安全）</div>
+      <ul class="help-list tip">
+        <li>大事な案件は必ず<b>「書き出し → JSON保存」</b>でファイル化し、社内サーバーやクラウドに保管する（これが一番確実）</li>
+        <li>復元は<b>「プロジェクト一覧 → JSONファイルを取込」</b>で戻せます</li>
+        <li>別PCやチームと共有したいときも、このJSONファイルを渡す</li>
+        <li>区切りのいいタイミング（1日の終わり・納品前など）で、こまめにJSON保存する習慣にする</li>
+        <li>ブラウザのデータ削除をするときは、<b>「サイトデータ」のチェックを外す</b></li>
+      </ul>
 
       <h3>AI連携について</h3>
       <p>「AI下書き」を開き、AnthropicのAPIキー（sk-ant-…）を入力すると利用できます。キーはこの端末のブラウザ内のみで使用され、ファイルには保存されません。「このブラウザに保持」をオンにすると次回入力を省略できます。使用モデルは Claude Opus 4.8 です。</p>
