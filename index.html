@@ -133,6 +133,9 @@ img{display:block;max-width:100%}
 }
 .menu button:hover{background:var(--accent-weak)}
 .menu .menu-note{font-size:var(--fs-xs);color:var(--ink-3);padding:2px 10px 6px}
+.pdf-opt{display:flex;gap:10px;padding:3px 10px 6px;flex-wrap:wrap}
+.pdf-opt label{display:flex;align-items:center;gap:4px;font-size:var(--fs-xs);cursor:pointer;color:var(--ink-2)}
+.pdf-opt input{margin:0}
 .menu hr{border:none;border-top:1px solid var(--line);margin:4px 0}
 
 /* ============ 香盤表 ============ */
@@ -280,6 +283,78 @@ img{display:block;max-width:100%}
   .sched-row .sr-equip::before{content:"機材 ";font-size:var(--fs-xs);color:var(--ink-3);margin-right:4px}
   .sched-row .sched-time{display:flex;align-items:baseline;gap:6px}
   .sched-row .sched-time small{display:inline}
+}
+
+/* ============ 共有ページ（閲覧専用） ============ */
+body.share-mode .topbar,
+body.share-mode .board-wrap,
+body.share-mode .sched-wrap,
+body.share-mode .warn-banner{display:none!important}
+.share-view{max-width:980px;margin:0 auto;padding:0 14px 60px}
+.share-head{
+  position:sticky;top:0;z-index:20;background:var(--surface);
+  border-bottom:2px solid var(--ink);margin:0 -14px 16px;padding:12px 14px 0;
+}
+.share-head .sh-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.share-head .sh-title b{font-size:19px;letter-spacing:.04em}
+.share-head .sh-title span{font-size:var(--fs-sm);color:var(--ink-3);font-family:var(--font-mono)}
+.sh-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.sh-tabs button{
+  border:none;background:none;padding:8px 14px;cursor:pointer;font-size:var(--fs-sm);
+  color:var(--ink-3);border-bottom:3px solid transparent;margin-bottom:-2px;font-weight:600;
+}
+.sh-tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+
+.sv-day{margin-bottom:22px}
+.sv-dayhead{
+  background:var(--ink);color:#fff;border-radius:var(--radius) var(--radius) 0 0;
+  padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.sv-dayhead b{font-size:var(--fs-lg)}
+.sv-dayhead .dh-meta{font-family:var(--font-mono);font-size:var(--fs-sm);color:#b8c6d4}
+.sv-dayhead .dh-memo{font-size:var(--fs-sm);color:#dbe4ec;width:100%}
+.sv-rows{border:1px solid var(--line-strong);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden}
+.sv-row{display:flex;gap:12px;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.sv-rows > .sv-row:first-child{border-top:none}
+.sv-row.other{background:#fbfaf6}
+.sv-row .sv-time{
+  font-family:var(--font-mono);font-weight:700;font-size:var(--fs-md);
+  white-space:nowrap;min-width:92px;line-height:1.4;
+}
+.sv-row .sv-time small{display:block;font-weight:400;color:var(--ink-3);font-size:var(--fs-xs)}
+.sv-row .sv-main{flex:1;min-width:0}
+.sv-row .sv-label{font-weight:700;font-size:var(--fs-md);margin-bottom:3px}
+.sv-row .sv-sub{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.8}
+.sv-row .sv-sub .tag{
+  display:inline-block;background:var(--surface-dim);border:1px solid var(--line-strong);
+  border-radius:10px;padding:0 8px;margin:0 4px 3px 0;font-size:var(--fs-xs);
+}
+.sv-row .sv-sub .tag.me{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.sv-row .sv-note{font-size:var(--fs-sm);color:var(--warn);margin-top:3px}
+.sv-thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.sv-thumbs figure{width:124px;margin:0}
+.sv-thumbs img{width:100%;aspect-ratio:16/9;object-fit:contain;background:#fff;border:1px solid var(--line-strong);border-radius:3px}
+.sv-thumbs figcaption{font-size:var(--fs-xs);color:var(--ink-3);font-family:var(--font-mono);margin-top:2px}
+
+.sv-cast table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);border:1px solid var(--line-strong)}
+.sv-cast th,.sv-cast td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left}
+.sv-cast th{background:var(--surface-dim);font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.08em}
+.sv-cast td.mono{font-family:var(--font-mono)}
+.sv-setup{
+  background:var(--accent-weak);border-left:3px solid var(--accent);border-radius:0 3px 3px 0;
+  padding:9px 12px;font-size:var(--fs-sm);color:var(--ink-2);margin-bottom:14px;
+}
+.share-foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);font-size:var(--fs-xs);color:var(--ink-3);line-height:1.8}
+.share-loading{padding:60px 20px;text-align:center;color:var(--ink-3);font-size:var(--fs-md)}
+.share-error{
+  margin:40px auto;max-width:560px;border:2px solid var(--err);background:var(--err-bg);
+  border-radius:var(--radius);padding:18px;font-size:var(--fs-sm);line-height:1.9;
+}
+.share-error b{color:var(--err);font-size:var(--fs-md);display:block;margin-bottom:6px}
+.share-url-box{display:flex;gap:7px;margin:10px 0 14px}
+.share-url-box input{
+  flex:1;min-width:0;border:1px solid var(--line-strong);border-radius:3px;
+  padding:7px 9px;font-family:var(--font-mono);font-size:var(--fs-xs);background:var(--surface-dim);
 }
 
 /* ============ 保存に関する警告バナー ============ */
@@ -846,12 +921,32 @@ img{display:block;max-width:100%}
 .pdf-footer{position:absolute;bottom:16px;left:38px;right:38px;display:flex;justify-content:space-between;font-size:9px;color:#6a7480;border-top:1px solid #cfd6dc;padding-top:5px}
 
 /* 香盤表PDF（A4横 1123×794） */
-.pdf-sched{width:1123px;height:794px;background:#fff;padding:28px 32px;position:relative;font-family:var(--font-sans);color:#1b2430}
+.pdf-sched{background:#fff;padding:28px 32px;position:relative;font-family:var(--font-sans);color:#1b2430;box-sizing:border-box}
+/* 1ページに収めるときは高さを内容なりにする（あとで縮小して合わせる） */
+.pdf-sched.ps-fit{height:auto;min-height:0;padding-bottom:46px}
+.pdf-sched.ps-fit .ps-foot{position:static;margin-top:10px}
+/* A4縦では列幅を詰めて全項目を保つ */
+.pdf-sched.ps-port{padding:24px 26px}
+.pdf-sched.ps-port .ps-main{font-size:17px}
+.pdf-sched.ps-port .ps-main .ps-day{height:25px;min-width:54px;font-size:14px;padding:0 10px}
+.pdf-sched.ps-port .ps-meta{font-size:11px}
+.pdf-sched.ps-port .ps-setup{font-size:10px}
+.pdf-sched.ps-port .ps-table{font-size:11px}
+.pdf-sched.ps-port .ps-table th{font-size:10px;padding:5px}
+.pdf-sched.ps-port .ps-table td{padding:5px}
+.pdf-sched.ps-port .ps-chkcell{font-size:10px}
+.pdf-sched.ps-port .ps-chk b{font-size:12px}
 .pdf-sched .ps-title{border-bottom:2px solid #1b2430;padding-bottom:7px;margin-bottom:10px}
-.pdf-sched .ps-main{font-size:20px;font-weight:700}
+/* html2canvas は inline-block の縦位置を素直に描かないため、
+   flex + 固定の行高で「座布団と文字」をきっちり合わせる */
+.pdf-sched .ps-main{
+  font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px;
+}
 .pdf-sched .ps-main .ps-day{
-  display:inline-block;background:#0f4c81;color:#fff;border-radius:4px;
-  padding:1px 10px;font-size:17px;vertical-align:2px;
+  display:flex;align-items:center;justify-content:center;
+  background:#0f4c81;color:#fff;border-radius:4px;
+  height:28px;min-width:62px;padding:0 12px;font-size:16px;line-height:1;
+  box-sizing:border-box;flex:0 0 auto;
 }
 .pdf-sched .ps-meta{font-size:12.5px;color:#4b5563;margin-top:4px}
 .pdf-sched .ps-setup{font-size:11.5px;color:#0f4c81;margin-top:3px;font-weight:600}
@@ -994,11 +1089,24 @@ img{display:block;max-width:100%}
     <div class="menu-wrap">
       <button type="button" class="btn" id="btnSchedExport" aria-haspopup="true" aria-expanded="false">書き出し ▾</button>
       <div class="menu" id="schedExportMenu" role="menu">
-        <div class="menu-note">PDF（A4横・現場用）</div>
+        <div class="menu-note">PDF の用紙設定</div>
+        <div class="pdf-opt">
+          <label><input type="radio" name="pdfOrient" value="portrait" checked> A4縦</label>
+          <label><input type="radio" name="pdfOrient" value="landscape"> A4横</label>
+        </div>
+        <div class="pdf-opt">
+          <label><input type="radio" name="pdfFit" value="fit" checked> 1ページに収める</label>
+          <label><input type="radio" name="pdfFit" value="pages"> 複数ページに分ける</label>
+        </div>
+        <hr>
         <button type="button" id="btnSchedPdfDay" role="menuitem">PDF 日別（表示中の日）</button>
         <button type="button" id="btnSchedPdfAll" role="menuitem">PDF 全日程まとめ</button>
         <hr>
         <button type="button" id="btnSchedCsv" role="menuitem">CSV（UTF-8 BOM）</button>
+        <hr>
+        <div class="menu-note">演者への共有</div>
+        <button type="button" id="btnShareJson" role="menuitem">共有用JSONを書き出し</button>
+        <button type="button" id="btnShareHelp" role="menuitem">共有の手順を見る</button>
       </div>
     </div>
     <span class="sched-summary" id="schedSummary"></span>
@@ -1171,6 +1279,38 @@ img{display:block;max-width:100%}
   </div>
 </div>
 
+<!-- ============ 共有（閲覧専用ページ） ============ -->
+<div class="share-view" id="shareView" hidden>
+  <header class="share-head">
+    <div class="sh-title"><b id="shareTitle">香盤表</b><span id="shareSub"></span></div>
+    <div class="sh-tabs" id="shareTabs"></div>
+  </header>
+  <main class="share-body" id="shareBody"></main>
+  <footer class="share-foot" id="shareFoot"></footer>
+</div>
+
+<!-- ============ 共有手順モーダル ============ -->
+<div class="modal-backdrop" id="shareHelpBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shareHelpTitle">
+    <div class="modal-head">
+      <h2 id="shareHelpTitle">香盤表をURLで共有する手順</h2>
+      <button type="button" class="icon-btn" id="btnShareHelpClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body help-body">
+      <p>演者の方には<b>URLを1回送るだけ</b>です。内容を直したらJSONを上書きするだけで、<b>全員の画面が自動で新しくなります</b>（再送不要）。</p>
+      <div class="help-step"><span class="hs-no">1</span><span><b>「共有用JSONを書き出し」</b>を押して、ファイルを保存します（ファイル名は変えないでください）。</span></div>
+      <div class="help-step"><span class="hs-no">2</span><span>GitHubの <code>ekonte</code> リポジトリを開き、<b>Add file → Upload files</b> でそのJSONをアップロードします（index.html と同じ場所）。</span></div>
+      <div class="help-step"><span class="hs-no">3</span><span>下の<b>共有URL</b>を演者の方に送ります。</span></div>
+      <div class="share-url-box">
+        <input type="text" id="shareUrl" readonly aria-label="共有URL">
+        <button type="button" class="btn primary" id="btnCopyShareUrl">コピー</button>
+      </div>
+      <div class="help-step"><span class="hs-no">4</span><span>内容を直したら、<b>1と2をもう一度</b>行ってください（同じファイル名で上書き）。URLはそのままで中身だけ新しくなります。</span></div>
+      <div class="help-note">共有ページは<b>閲覧専用</b>です。演者が内容を書き換えることはできません。リポジトリが公開設定のため、<b>URLを知っている人は誰でも見られます</b>。個人情報や社外秘の記載にはご注意ください。</div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 出演者の拘束時間 ============ -->
 <div class="modal-backdrop" id="castBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="castTitle">
@@ -1256,7 +1396,7 @@ img{display:block;max-width:100%}
       <h2 id="helpTitle">使い方と注意事項</h2>
       <button type="button" class="icon-btn" id="btnHelpClose" aria-label="閉じる">✕</button>
     </div>
-    <div class="modal-body help-body">
+    <div class="modal-body help-body" id="helpBody">
 
       <h3>基本の流れ</h3>
       <div class="help-step"><span class="hs-no">1</span><span><b>AI下書き</b>に企画テキストを貼り付けて生成すると、カット割り・カメラワーク・秒数配分がテーブルに反映されます（手作業で組む場合は「＋シーン追加」「＋コマ追加」から）。</span></div>
@@ -1286,7 +1426,12 @@ img{display:block;max-width:100%}
       <p><b>「出演者の拘束時間」</b>ボタンで、演者ごとの集合・解散・拘束時間を日別に自動集計します（テキストでコピー可）。<b>撮影設定</b>欄に機材やカメラ設定を書いておくと、香盤表PDFの見出しに印字されます。</p>
       <p><b>開始時刻と各行の所要時間を入れると、以降の時刻が自動で積み上がります。</b>行を並べ替えたり所要時間を変えると、全体の時刻がその場で再計算されます。「＋行を追加」で移動・休憩・セッティングなどの行も挟めます（区分を「その他」にすると色が変わります）。備考欄は当日のメモにお使いください。</p>
       <div class="help-note"><b>絵コンテを直した後にもう一度「取り込み」を押しても、入力済みの時刻・備考は消えません。</b>新しいカットの行が追加され、絵コンテから消えたカットの行には「絵コンテから削除済」の印が付きます（自動では消さないので、確認してから削除してください）。</div>
-      <p>書き出しは<b>PDF 日別</b>（表示中の日）と<b>PDF 全日程まとめ</b>（日ごとに改ページ）、<b>CSV</b>（撮影日の列つき）に対応しています。PDFには横・縦のチェック欄が入るので、現場で紙に書き込めます。</p>
+      <p>書き出しは<b>PDF 日別</b>（表示中の日）と<b>PDF 全日程まとめ</b>、<b>CSV</b>（撮影日の列つき）に対応しています。PDFには横・縦のチェック欄が入るので、現場で紙に書き込めます。用紙は<b>A4縦／A4横</b>、<b>1ページに収める／複数ページに分ける</b>を書き出しメニューで選べます（初期設定はA4縦・1ページに収める）。行数が多いと縮小されるため、文字が小さいと感じたら「複数ページに分ける」をお選びください。</p>
+
+      <h3>演者へのURL共有</h3>
+      <p>PDFを何度も送り直さなくて済むよう、<b>URLで共有</b>できます。「書き出し → 共有用JSONを書き出し」を押すとファイルが保存されるので、<b>index.html と同じ要領でGitHubにアップ</b>してください。表示されるURLを演者に送れば、閲覧専用の香盤表が開きます（絵コンテの絵・出演者の拘束時間つき）。</p>
+      <div class="help-note"><b>内容を直したときは、同じファイル名でJSONを上書きするだけです。URLは変わらないので再送は不要</b>で、全員の画面が自動的に新しくなります。共有ページは閲覧専用なので、演者が内容を書き換えることはできません。<br>
+      ただしリポジトリが公開設定のため<b>URLを知っている人は誰でも閲覧できます</b>。個人情報や社外秘の記載にはご注意ください。</div>
       <p>チェック機能には、<b>どの撮影日にも入っていないカット</b>・<b>複数の日に重複しているカット</b>・<b>終業時刻の超過</b>・<b>昼休憩への撮影の混入</b>の警告が入ります。終業時刻と昼休憩は撮影日ごとに変更できます。</p>
 
       <h3>準備リスト（撮影場所別）</h3>
@@ -5305,22 +5450,33 @@ $("#btnSchedCsv").addEventListener("click", () => {
    日別（1日ずつ改ページ）と全日程まとめの両方に対応。
    ============================================================ */
 const SCHED_ROWS_PER_PAGE = 11;
+/* A4のピクセル寸法（96dpi相当）。向きで入れ替える */
+const A4 = { portrait: { w: 794, h: 1123, mm: [210, 297] }, landscape: { w: 1123, h: 794, mm: [297, 210] } };
 
-function schedPdfPageHTML(day, rows, pageNo, pageTotal, info) {
+function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
   const s = schedule();
+  const o = opt || {};
+  const page = A4[o.orient === "landscape" ? "landscape" : "portrait"];
   return `
-  <div class="pdf-sched">
+  <div class="pdf-sched ${o.orient === "landscape" ? "ps-land" : "ps-port"} ${o.fit ? "ps-fit" : ""}"
+       style="width:${page.w}px;${o.fit ? "" : `height:${page.h}px;`}">
     <div class="ps-title">
-      <div class="ps-main">香盤表 — ${esc(state.meta.title || "無題プロジェクト")}　<span class="ps-day">${esc(day.name)}</span></div>
+      <div class="ps-main"><span>香盤表 — ${esc(state.meta.title || "無題プロジェクト")}</span><span class="ps-day">${esc(day.name)}</span></div>
       <div class="ps-meta">${esc(day.date || "日付未設定")} ／ ${fmtHM(info.start)}〜${fmtHM(info.end)} ／ 所要 ${fmtMin(info.minutes)} ／ 終業 ${esc(day.endTime)} ／ 予備枠 ${info.spareMin >= 0 ? fmtMin(info.spareMin) : "−" + fmtMin(-info.spareMin) + "（超過）"}${day.memo ? " ／ " + esc(day.memo) : ""}</div>
       ${s.setup ? `<div class="ps-setup">撮影設定：${esc(s.setup)}</div>` : ""}
     </div>
     <table class="ps-table">
       <thead><tr>
-        <th style="width:30px">No</th><th style="width:84px">時刻</th><th style="width:44px">所要</th>
-        <th style="width:48px">区分</th><th>内容・場所</th><th style="width:62px">カット</th>
-        <th style="width:96px">横 / 縦</th><th style="width:86px">演者</th>
-        <th style="width:128px">機材</th><th style="width:124px">備考</th>
+        <th style="width:${o.orient === "landscape" ? 30 : 26}px">No</th>
+        <th style="width:${o.orient === "landscape" ? 84 : 70}px">時刻</th>
+        <th style="width:${o.orient === "landscape" ? 44 : 38}px">所要</th>
+        <th style="width:${o.orient === "landscape" ? 48 : 42}px">区分</th>
+        <th>内容・場所</th>
+        <th style="width:${o.orient === "landscape" ? 62 : 52}px">カット</th>
+        <th style="width:${o.orient === "landscape" ? 96 : 84}px">横 / 縦</th>
+        <th style="width:${o.orient === "landscape" ? 86 : 64}px">演者</th>
+        <th style="width:${o.orient === "landscape" ? 128 : 96}px">機材</th>
+        <th style="width:${o.orient === "landscape" ? 124 : 96}px">備考</th>
       </tr></thead>
       <tbody>
       ${rows.map((r, i) => {
@@ -5352,6 +5508,91 @@ function schedPdfPageHTML(day, rows, pageNo, pageTotal, info) {
   </div>`;
 }
 
+/* ============================================================
+   香盤表のURL共有
+   共有用JSONを書き出し → GitHubに置く → ?share=ファイル名 で閲覧。
+   JSONを上書きすれば、同じURLのまま全員の画面が新しくなる。
+   ============================================================ */
+function shareFileName() {
+  const base = (state.meta.title || "schedule")
+    .replace(/[\\/:*?"<>|#?&=\s]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return "share-" + (base || "schedule").slice(0, 40) + ".json";
+}
+function buildShareData() {
+  const s = schedule();
+  const info = computeSchedTimes();
+  const cuts = new Map(flattenCuts().map(r => [r.no, r]));
+  return {
+    app: "tsugu-storyboard-share",
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    title: state.meta.title || "無題プロジェクト",
+    client: state.meta.client || "",
+    author: state.meta.author || "",
+    setup: s.setup || "",
+    days: s.days.map(d => ({
+      name: d.name, date: d.date, memo: d.memo,
+      start: fmtHM(info[d.id].start), end: fmtHM(info[d.id].end),
+      rows: rowsOfDay(d.id).map(r => ({
+        start: fmtHM(r._start), end: fmtHM(r._end),
+        minutes: Number(r.minutes) || 0,
+        type: r.type, label: r.label,
+        cutNos: r.cutNos || [], cast: r.cast || [], equipment: r.equipment || [],
+        note: r.note || "", window: locationWindow(r.label) || "",
+        /* 絵コンテ画像（そのカットの絵）を添える */
+        images: (r.cutNos || []).map(no => {
+          const c = cuts.get(no);
+          return c && c.cut.image ? { no, src: c.cut.image, content: c.cut.content || "" } : null;
+        }).filter(Boolean)
+      }))
+    })),
+    cast: castSchedule().map(g => ({
+      day: g.day.name,
+      list: g.list.map(c => ({
+        name: c.name, start: fmtHM(c.start), end: fmtHM(c.end),
+        minutes: c.minutes, cutNos: c.cutNos
+      }))
+    }))
+  };
+}
+function shareUrlFor(file) {
+  const base = location.origin + location.pathname;
+  return base + "?share=" + encodeURIComponent(file);
+}
+
+$("#btnShareJson").addEventListener("click", () => {
+  schedExportMenu.classList.remove("open");
+  const s = schedule();
+  if (!s.rows.length) { toast("香盤表が空です", true); return; }
+  const data = buildShareData();
+  const name = shareFileName();
+  downloadBlob(new Blob([JSON.stringify(data)], { type: "application/json" }), name);
+  openShareHelp(name);
+  toast(`${name} を書き出しました。GitHubにアップしてください`);
+});
+
+function openShareHelp(name) {
+  const file = name || shareFileName();
+  $("#shareUrl").value = shareUrlFor(file);
+  $("#shareHelpBackdrop").classList.add("open");
+}
+function closeShareHelp() {
+  const el = document.getElementById("shareHelpBackdrop");
+  if (el) el.classList.remove("open");
+}
+$("#btnShareHelp").addEventListener("click", () => { schedExportMenu.classList.remove("open"); openShareHelp(); });
+$("#btnShareHelpClose").addEventListener("click", closeShareHelp);
+$("#shareHelpBackdrop").addEventListener("click", (e) => { if (e.target.id === "shareHelpBackdrop") closeShareHelp(); });
+$("#btnCopyShareUrl").addEventListener("click", () => {
+  copyText($("#shareUrl").value).then(() => toast("共有URLをコピーしました"));
+});
+
+function pdfOptions() {
+  const o = (document.querySelector('input[name="pdfOrient"]:checked') || {}).value || "portrait";
+  const f = (document.querySelector('input[name="pdfFit"]:checked') || {}).value || "fit";
+  return { orient: o, fit: f === "fit" };
+}
+
 async function exportSchedPdf(mode) {
   schedExportMenu.classList.remove("open");
   const s = schedule();
@@ -5360,6 +5601,8 @@ async function exportSchedPdf(mode) {
     toast("PDFライブラリを読み込めていません。ネットワーク接続後にページを再読込してください。", true);
     return;
   }
+  const opt = pdfOptions();
+  const page = A4[opt.orient];
   const info = computeSchedTimes();
   /* 日別は表示中の日（全日程表示なら先頭の日）、まとめは全部 */
   let days = s.days;
@@ -5375,26 +5618,41 @@ async function exportSchedPdf(mode) {
   toast("PDFを生成しています…");
   try {
     const stage = $("#pdfStage");
-    /* ページ割り: 日ごとに改ページする */
+    stage.style.width = page.w + "px";
+    /* ページ割り: 日ごとに改ページ。「1ページに収める」なら1日=1ページ */
+    const perPage = opt.fit ? Infinity : SCHED_ROWS_PER_PAGE;
     const pages = [];
     days.forEach(d => {
       const rows = rowsOfDay(d.id);
-      for (let i = 0; i < rows.length; i += SCHED_ROWS_PER_PAGE) {
-        pages.push({ day: d, rows: rows.slice(i, i + SCHED_ROWS_PER_PAGE) });
-      }
+      if (perPage === Infinity) { pages.push({ day: d, rows }); return; }
+      for (let i = 0; i < rows.length; i += perPage) pages.push({ day: d, rows: rows.slice(i, i + perPage) });
     });
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const doc = new jsPDF({ orientation: opt.orient, unit: "mm", format: "a4" });
+    const [mmW, mmH] = page.mm;
+    let shrunk = false;
+
     for (let p = 0; p < pages.length; p++) {
-      stage.innerHTML = schedPdfPageHTML(pages[p].day, pages[p].rows, p + 1, pages.length, info[pages[p].day.id]);
-      const canvas = await window.html2canvas($(".pdf-sched", stage), { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      stage.innerHTML = schedPdfPageHTML(pages[p].day, pages[p].rows, p + 1, pages.length, info[pages[p].day.id], opt);
+      const el = $(".pdf-sched", stage);
+      const canvas = await window.html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
       if (p > 0) doc.addPage();
-      doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 297, 210);
+      if (opt.fit) {
+        /* 内容の高さが用紙を超えたら、用紙内に収まるよう縮小する */
+        const ratio = canvas.height / canvas.width;      /* 実際の縦横比 */
+        let w = mmW, h = mmW * ratio;
+        if (h > mmH) { h = mmH; w = mmH / ratio; shrunk = true; }
+        doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", (mmW - w) / 2, 0, w, h);
+      } else {
+        doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, mmW, mmH);
+      }
     }
     stage.innerHTML = "";
+    stage.style.width = "";
     const suffix = mode === "day" ? "_香盤表_" + days[0].name : "_香盤表_全日程";
     doc.save(fileBase() + suffix + ".pdf");
-    toast(`香盤表PDFを書き出しました（${pages.length}ページ）`);
+    toast(`香盤表PDFを書き出しました（${opt.orient === "portrait" ? "A4縦" : "A4横"} / ${pages.length}ページ）` +
+      (shrunk ? "　※1ページに収めるため縮小しました" : ""));
   } catch (e) {
     toast("PDF生成に失敗: " + e.message, true);
   } finally {
@@ -5525,7 +5783,135 @@ if (window.ResizeObserver) {
   try { new ResizeObserver(syncTopbarHeight).observe(document.querySelector(".topbar")); } catch (e) {}
 }
 
+/* ============================================================
+   共有ページ（閲覧専用）
+   ?share=ファイル名 が付いていたら、そのJSONを読んで表示するだけ。
+   編集機能は一切動かさない。
+   ============================================================ */
+let shareData = null;
+let shareTab = "";           /* "" = 全日程 / DAY名 / "__cast" */
+let shareHighlight = "";     /* 名前で絞り込み（?me=演者名） */
+
+function shareParam(key) {
+  try { return new URLSearchParams(location.search).get(key) || ""; } catch (e) { return ""; }
+}
+
+function renderShareDay(d) {
+  return `
+  <section class="sv-day">
+    <div class="sv-dayhead">
+      <b>${esc(d.name)}</b>
+      <span class="dh-meta">${esc(d.date || "日付未設定")} ／ ${esc(d.start)}〜${esc(d.end)}</span>
+      ${d.memo ? `<span class="dh-memo">${esc(d.memo)}</span>` : ""}
+    </div>
+    <div class="sv-rows">
+      ${d.rows.map(r => {
+        const mine = shareHighlight && (r.cast || []).indexOf(shareHighlight) >= 0;
+        if (shareHighlight && !mine && r.type !== "other") return "";
+        return `
+        <div class="sv-row ${r.type === "other" ? "other" : ""}">
+          <div class="sv-time">${esc(r.start)}<small>〜${esc(r.end)}</small></div>
+          <div class="sv-main">
+            <div class="sv-label">${esc(r.label || (r.type === "other" ? "（その他）" : "（無題）"))}</div>
+            <div class="sv-sub">
+              ${(r.cast || []).length ? (r.cast || []).map(c =>
+                `<span class="tag ${shareHighlight === c ? "me" : ""}">${esc(c)}</span>`).join("") : ""}
+              ${r.cutNos && r.cutNos.length ? `<span style="font-family:var(--font-mono);color:var(--ink-3)">#${esc(compactNos(r.cutNos))}</span>` : ""}
+              ${(r.equipment || []).length ? `<br><span style="color:var(--ink-3);font-size:var(--fs-xs)">機材: ${esc((r.equipment || []).join("・"))}</span>` : ""}
+              ${r.window ? `<br><span style="color:var(--warn);font-size:var(--fs-xs)">窓: ${esc(r.window)}</span>` : ""}
+            </div>
+            ${r.note ? `<div class="sv-note">${esc(r.note)}</div>` : ""}
+            ${(r.images || []).length ? `<div class="sv-thumbs">${(r.images || []).map(im =>
+              `<figure><img src="${im.src}" alt="カット${im.no}"><figcaption>#${im.no} ${esc((im.content || "").slice(0, 14))}</figcaption></figure>`).join("")}</div>` : ""}
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  </section>`;
+}
+
+function renderShareCast() {
+  const groups = (shareData.cast || []).filter(g => g.list && g.list.length);
+  if (!groups.length) return `<div class="share-loading">出演者の情報はありません。</div>`;
+  return groups.map(g => `
+    <section class="sv-day sv-cast">
+      <div class="sv-dayhead"><b>${esc(g.day)}</b></div>
+      <table>
+        <thead><tr><th>出演者</th><th>集合</th><th>解散</th><th>拘束時間</th><th>該当カット</th></tr></thead>
+        <tbody>${g.list.map(c => `
+          <tr ${shareHighlight === c.name ? 'style="background:var(--accent-weak)"' : ""}>
+            <td><b>${esc(c.name)}</b></td>
+            <td class="mono">${esc(c.start)}</td>
+            <td class="mono">${esc(c.end)}</td>
+            <td class="mono">${Math.floor(c.minutes / 60)}時間${c.minutes % 60}分</td>
+            <td class="mono">${(c.cutNos || []).length ? "#" + esc(compactNos(c.cutNos)) : "—"}</td>
+          </tr>`).join("")}</tbody>
+      </table>
+    </section>`).join("");
+}
+
+function renderShareView() {
+  const d = shareData;
+  $("#shareTitle").textContent = `香盤表 — ${d.title}`;
+  $("#shareSub").textContent =
+    [d.client, d.author].filter(Boolean).join(" / ") +
+    `　更新 ${new Date(d.updatedAt).toLocaleString("ja-JP")}`;
+
+  $("#shareTabs").innerHTML =
+    `<button type="button" data-shtab="" aria-selected="${shareTab === "" ? "true" : "false"}">全日程</button>` +
+    d.days.map(x => `<button type="button" data-shtab="${esc(x.name)}" aria-selected="${shareTab === x.name ? "true" : "false"}">${esc(x.name)}</button>`).join("") +
+    `<button type="button" data-shtab="__cast" aria-selected="${shareTab === "__cast" ? "true" : "false"}">出演者の時間</button>`;
+
+  const body = $("#shareBody");
+  if (shareTab === "__cast") {
+    body.innerHTML = renderShareCast();
+  } else {
+    const days = shareTab ? d.days.filter(x => x.name === shareTab) : d.days;
+    body.innerHTML = (d.setup ? `<div class="sv-setup"><b>撮影設定</b>　${esc(d.setup)}</div>` : "") +
+      days.map(renderShareDay).join("");
+  }
+  $("#shareFoot").innerHTML =
+    `この画面は閲覧専用です。最新の内容が自動で表示されます（更新 ${esc(new Date(d.updatedAt).toLocaleString("ja-JP"))}）。` +
+    `<br>内容について不明な点は制作担当までご連絡ください。`;
+}
+
+$("#shareTabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-shtab]");
+  if (!b) return;
+  shareTab = b.dataset.shtab;
+  renderShareView();
+  window.scrollTo(0, 0);
+});
+
+async function bootShareMode(file) {
+  document.body.classList.add("share-mode");
+  $("#shareView").hidden = false;
+  $("#shareBody").innerHTML = `<div class="share-loading">香盤表を読み込んでいます…</div>`;
+  shareHighlight = shareParam("me");
+  try {
+    const res = await fetch(file + "?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.days)) throw new Error("形式が正しくありません");
+    shareData = data;
+    renderShareView();
+  } catch (e) {
+    $("#shareTitle").textContent = "香盤表を表示できません";
+    $("#shareBody").innerHTML = `<div class="share-error">
+      <b>香盤表のデータが見つかりませんでした</b>
+      お手数ですが、共有元の担当者にご連絡ください。<br>
+      <span style="color:var(--ink-3);font-size:var(--fs-xs)">詳細: ${esc(file)} / ${esc(e.message)}</span>
+    </div>`;
+  }
+}
+
 (async function init() {
+  /* 共有URLで開かれた場合は、閲覧専用ページとして動かす */
+  const shareFile = shareParam("share");
+  if (shareFile && /^[\w.\-]+\.json$/.test(shareFile)) {
+    await bootShareMode(shareFile);
+    return;
+  }
   $("#appVer").textContent = `（更新 ${APP_UPDATED}）`;
   syncTopbarHeight();
   syncMetaInputs();
