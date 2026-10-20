@@ -135,6 +135,62 @@ img{display:block;max-width:100%}
 .menu .menu-note{font-size:var(--fs-xs);color:var(--ink-3);padding:2px 10px 6px}
 .menu hr{border:none;border-top:1px solid var(--line);margin:4px 0}
 
+/* ============ 香盤表 ============ */
+.view-seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.sched-wrap{max-width:1400px;margin:0 auto;padding:20px 16px 120px}
+.sched-head{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);padding:10px 12px;
+}
+.sched-field{display:flex;flex-direction:column;gap:1px}
+.sched-field label{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.08em}
+.sched-field input{border:1px solid var(--line-strong);border-radius:3px;padding:4px 7px;font-family:var(--font-mono)}
+.sched-summary{margin-left:auto;font-size:var(--fs-sm);font-family:var(--font-mono);color:var(--ink-2)}
+
+.sched-table{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden}
+.sched-hdr,.sched-row{
+  display:grid;align-items:start;gap:8px;padding:7px 10px;
+  grid-template-columns:24px 96px 70px minmax(0,1.4fr) 92px minmax(0,1fr) minmax(0,1.2fr) 62px minmax(0,1fr) 28px;
+}
+.sched-hdr{
+  background:var(--ink);color:#fff;font-size:var(--fs-xs);letter-spacing:.08em;
+  position:sticky;top:var(--topbar-h);z-index:10;align-items:center;
+}
+.sched-row{border-top:1px solid var(--line);font-size:var(--fs-sm)}
+.sched-row:hover{background:var(--surface-dim)}
+.sched-row.type-other{background:#fbfaf6}
+.sched-row.stale{background:var(--warn-bg)}
+.sched-row.dragging{opacity:.35}
+.sched-row .sr-handle{cursor:grab;color:var(--ink-3);user-select:none;font-size:15px;line-height:1.4}
+.sched-row .sr-handle:active{cursor:grabbing}
+.sched-time{font-family:var(--font-mono);font-weight:700;font-size:var(--fs-sm);line-height:1.4;white-space:nowrap}
+.sched-time small{display:block;font-weight:400;color:var(--ink-3);font-size:10px}
+.sched-row select,.sched-row input,.sched-row textarea{
+  border:1px solid var(--line);border-radius:3px;padding:4px 6px;font-size:var(--fs-sm);
+  width:100%;min-width:0;background:var(--surface-dim);font-family:inherit;
+}
+.sched-row textarea{resize:vertical;min-height:30px;line-height:1.5}
+.sched-row input:focus,.sched-row textarea:focus,.sched-row select:focus{border-color:var(--accent);background:#fff}
+.sched-row input.min-input{font-family:var(--font-mono);text-align:right}
+.sched-row .sr-cuts{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-2);padding-top:5px;word-break:break-all}
+.sched-row .sr-tags .tag{
+  display:inline-block;background:var(--surface-dim);border:1px solid var(--line-strong);
+  border-radius:10px;padding:0 7px;margin:0 3px 3px 0;font-size:var(--fs-xs);
+}
+.sched-row .sr-tags .tag.eq{background:var(--accent-weak);border-color:var(--accent);color:var(--accent);font-weight:600}
+.sched-row .stale-badge{
+  display:inline-block;background:var(--warn);color:#fff;border-radius:3px;
+  padding:0 5px;font-size:10px;font-weight:700;margin-left:5px;
+}
+.sched-empty{padding:36px 16px;text-align:center;color:var(--ink-3);font-size:var(--fs-sm);line-height:1.9}
+.sched-drop{height:0;border-top:3px solid var(--accent);margin:0}
+@media (max-width:1100px){
+  .sched-hdr{display:none}
+  .sched-row{grid-template-columns:24px 96px minmax(0,1fr) 62px 28px;row-gap:6px}
+  .sched-row .sr-type{grid-column:3/5}
+  .sched-row .sr-cuts,.sched-row .sr-cast,.sched-row .sr-equip,.sched-row .sr-note{grid-column:2/6}
+}
+
 /* ============ 保存に関する警告バナー ============ */
 .warn-banner{
   display:none;border:2px solid var(--err);background:var(--err-bg);border-radius:var(--radius);
@@ -300,6 +356,48 @@ img{display:block;max-width:100%}
 .shoot-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .shoot-item{display:flex;flex-direction:column;gap:2px;flex:1 1 92px;min-width:0}
 .shoot-item label{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.08em}
+.shoot-item.equip-cell{flex:1 1 100%}
+.equip-btn{
+  border:1px solid var(--line);background:var(--surface-dim);border-radius:3px;
+  padding:4px 6px;cursor:pointer;text-align:left;min-height:28px;
+  display:flex;flex-wrap:wrap;gap:3px;align-items:center;width:100%;
+}
+.equip-btn:hover{border-color:var(--accent);background:#fff}
+.equip-chip{
+  background:var(--accent-weak);color:var(--accent);border:1px solid var(--accent);
+  border-radius:10px;padding:0 7px;font-size:var(--fs-xs);font-weight:600;white-space:nowrap;
+}
+.equip-none{font-size:var(--fs-xs);color:var(--ink-3)}
+
+/* 機材選択ポップアップ */
+.equip-pop{
+  position:fixed;z-index:95;background:var(--surface);border:1.5px solid var(--ink);
+  border-radius:var(--radius);box-shadow:var(--shadow-lift);width:260px;display:none;
+}
+.equip-pop.open{display:block}
+.ep-head{
+  padding:7px 10px;border-bottom:1px solid var(--line);font-size:var(--fs-sm);
+  font-weight:700;display:flex;align-items:center;
+}
+.ep-head .icon-btn{margin-left:auto;width:22px;height:22px}
+.ep-list{max-height:220px;overflow-y:auto;padding:4px}
+.ep-item{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:3px;font-size:var(--fs-sm);cursor:pointer}
+.ep-item:hover{background:var(--accent-weak)}
+.ep-item .ep-del{
+  margin-left:auto;border:none;background:none;color:var(--ink-3);cursor:pointer;
+  font-size:var(--fs-xs);padding:0 3px;
+}
+.ep-item .ep-del:hover{color:var(--err)}
+.ep-cat{
+  font-size:10px;color:var(--ink-3);letter-spacing:.14em;font-weight:700;
+  padding:6px 8px 2px;border-top:1px solid var(--line);margin-top:3px;
+}
+.ep-list > .ep-cat:first-child{border-top:none;margin-top:0}
+.ep-add{display:flex;gap:5px;padding:7px;border-top:1px solid var(--line);flex-wrap:wrap}
+.ep-add input{flex:1 1 110px;min-width:0;border:1px solid var(--line-strong);border-radius:3px;padding:4px 7px;font-size:var(--fs-sm)}
+.ep-add select{border:1px solid var(--line-strong);border-radius:3px;padding:4px 5px;font-size:var(--fs-xs);background:var(--surface)}
+.ep-add button{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:3px;padding:4px 10px;font-size:var(--fs-xs);cursor:pointer;font-weight:600}
+.ep-empty{font-size:var(--fs-xs);color:var(--ink-3);padding:10px;text-align:center}
 .field input.loc-input{
   border:1px solid var(--line);border-radius:3px;padding:5px 7px;
   font-size:var(--fs-sm);background:var(--surface-dim);width:100%;min-width:0;
@@ -539,6 +637,35 @@ img{display:block;max-width:100%}
 .help-listlabel{font-size:var(--fs-sm);font-weight:700;margin:10px 0 4px}
 .help-listlabel.ng{color:var(--err)} .help-listlabel.ok{color:var(--ok)} .help-listlabel.tip{color:var(--accent)}
 
+/* 準備リスト */
+.prep-body{max-height:60vh;overflow-y:auto}
+.prep-sum{
+  background:var(--accent-weak);border-left:3px solid var(--accent);border-radius:0 3px 3px 0;
+  padding:9px 12px;margin-bottom:12px;font-size:var(--fs-sm);line-height:1.8;
+}
+.prep-sum b{color:var(--accent)}
+.prep-group{border:1px solid var(--line-strong);border-radius:var(--radius);margin-bottom:10px}
+.prep-group > h4{
+  background:var(--ink);color:#fff;padding:6px 11px;font-size:var(--fs-sm);
+  border-radius:var(--radius) var(--radius) 0 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.prep-group > h4 .pg-stat{margin-left:auto;font-family:var(--font-mono);font-size:var(--fs-xs);color:#b8c6d4;font-weight:400}
+.prep-rows{padding:8px 11px}
+.prep-line{display:flex;gap:9px;font-size:var(--fs-sm);padding:3px 0;align-items:baseline;flex-wrap:wrap}
+.prep-line .pl-label{font-size:var(--fs-xs);color:var(--ink-3);min-width:62px;letter-spacing:.08em}
+.prep-line .pl-val{flex:1;min-width:0;color:var(--ink-2)}
+.prep-line .pl-val .tag{
+  display:inline-block;background:var(--surface-dim);border:1px solid var(--line-strong);
+  border-radius:10px;padding:0 8px;margin:0 4px 3px 0;font-size:var(--fs-xs);
+}
+.prep-line .pl-val .tag.eq{background:var(--accent-weak);border-color:var(--accent);color:var(--accent);font-weight:600}
+.eq-cat{
+  display:inline-block;font-size:10px;color:var(--ink-3);letter-spacing:.1em;
+  font-weight:700;margin:0 4px 0 2px;
+}
+.prep-cuts{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-2)}
+.prep-empty{color:var(--ink-3);font-size:var(--fs-sm);text-align:center;padding:24px 0}
+
 /* 変更履歴 */
 .hist-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .hist-note{font-size:var(--fs-xs);color:var(--ink-3)}
@@ -614,6 +741,19 @@ img{display:block;max-width:100%}
 .pdf-cut-tc .tc-item .v{font-size:11.5px;font-weight:700}
 .pdf-footer{position:absolute;bottom:16px;left:38px;right:38px;display:flex;justify-content:space-between;font-size:9px;color:#6a7480;border-top:1px solid #cfd6dc;padding-top:5px}
 
+/* 香盤表PDF（A4横 1123×794） */
+.pdf-sched{width:1123px;height:794px;background:#fff;padding:28px 32px;position:relative;font-family:var(--font-sans);color:#1b2430}
+.pdf-sched .ps-title{border-bottom:2px solid #1b2430;padding-bottom:7px;margin-bottom:10px}
+.pdf-sched .ps-main{font-size:17px;font-weight:700}
+.pdf-sched .ps-meta{font-size:11px;color:#4b5563;margin-top:3px}
+.pdf-sched .ps-table{width:100%;border-collapse:collapse;font-size:10.5px}
+.pdf-sched .ps-table th{background:#1b2430;color:#fff;padding:5px 6px;text-align:left;font-size:9.5px;letter-spacing:.06em;border:1px solid #1b2430}
+.pdf-sched .ps-table td{border:1px solid #cfd6dc;padding:5px 6px;vertical-align:top;line-height:1.45;word-break:break-word}
+.pdf-sched .ps-table tr.ps-other td{background:#f6f4ec}
+.pdf-sched .ps-c{text-align:center}
+.pdf-sched .ps-mono{font-family:var(--font-mono);white-space:nowrap}
+.pdf-sched .ps-foot{position:absolute;bottom:14px;left:32px;right:32px;display:flex;justify-content:space-between;font-size:9px;color:#6a7480;border-top:1px solid #cfd6dc;padding-top:4px}
+
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 </head>
@@ -653,6 +793,10 @@ img{display:block;max-width:100%}
   </div>
   <div class="topbar-row">
     <div class="toolbar">
+      <div class="seg view-seg" role="group" aria-label="画面切替">
+        <button type="button" data-view="board" aria-pressed="true">絵コンテ</button>
+        <button type="button" data-view="sched" aria-pressed="false">香盤表</button>
+      </div>
       <div class="seg" role="group" aria-label="コマ割りテンプレート">
         <button type="button" data-tpl="wide" aria-pressed="true">横長</button>
         <button type="button" data-tpl="stack" aria-pressed="false">縦積み</button>
@@ -675,6 +819,7 @@ img{display:block;max-width:100%}
           <div class="menu-note">この絵コンテで使う項目</div>
           <label class="field-check"><input type="checkbox" data-fieldkey="cast"> 演者名</label>
           <label class="field-check"><input type="checkbox" data-fieldkey="location"> 撮影場所</label>
+          <label class="field-check"><input type="checkbox" data-fieldkey="equipment"> 機材</label>
           <div class="menu-note" style="padding-top:6px">チェックを外すと入力欄が隠れ、PDF・CSVにも出力されません。</div>
         </div>
       </div>
@@ -689,6 +834,9 @@ img{display:block;max-width:100%}
         <div class="menu" id="exportMenu" role="menu">
           <div class="menu-note">クライアント提出</div>
           <button type="button" id="btnPdf" role="menuitem">PDF 絵コンテ用紙（A4縦）</button>
+          <hr>
+          <div class="menu-note">撮影準備</div>
+          <button type="button" id="btnPrepList" role="menuitem">準備リスト（撮影場所別）</button>
           <hr>
           <div class="menu-note">Vコン工程（Premiere / AE）</div>
           <button type="button" id="btnCsv" role="menuitem">CSV 書き出し（UTF-8 BOM）</button>
@@ -718,6 +866,25 @@ img{display:block;max-width:100%}
     <span class="storage-note" id="storageNote"></span>
   </div>
   <div class="board tpl-wide" id="board"></div>
+</main>
+
+<!-- ============ 香盤表 ============ -->
+<main class="sched-wrap" id="schedWrap" hidden>
+  <div class="sched-head">
+    <div class="sched-field"><label for="schedDate">撮影日</label><input type="date" id="schedDate"></div>
+    <div class="sched-field"><label for="schedStart">開始時刻</label><input type="time" id="schedStart" value="09:00"></div>
+    <button type="button" class="btn primary" id="btnSchedGen">絵コンテから取り込み</button>
+    <button type="button" class="btn" id="btnSchedAddRow">＋ 行を追加</button>
+    <div class="menu-wrap">
+      <button type="button" class="btn" id="btnSchedExport" aria-haspopup="true" aria-expanded="false">書き出し ▾</button>
+      <div class="menu" id="schedExportMenu" role="menu">
+        <button type="button" id="btnSchedPdf" role="menuitem">PDF（A4横）</button>
+        <button type="button" id="btnSchedCsv" role="menuitem">CSV（UTF-8 BOM）</button>
+      </div>
+    </div>
+    <span class="sched-summary" id="schedSummary"></span>
+  </div>
+  <div class="sched-table" id="schedTable"></div>
 </main>
 
 <!-- ============ チェックパネル ============ -->
@@ -877,6 +1044,24 @@ img{display:block;max-width:100%}
   </div>
 </div>
 
+<!-- ============ 準備リストモーダル ============ -->
+<div class="modal-backdrop" id="prepBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prepTitle">
+    <div class="modal-head">
+      <h2 id="prepTitle">準備リスト（撮影場所別）</h2>
+      <button type="button" class="icon-btn" id="btnPrepClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="prep-body" id="prepBody"></div>
+      <div class="bulk-actions">
+        <button type="button" class="btn" id="btnPrepCopy">テキストでコピー</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn primary" id="btnPrepCsv">CSVで書き出し</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 変更履歴モーダル ============ -->
 <div class="modal-backdrop" id="histBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="histTitle">
@@ -941,10 +1126,22 @@ img{display:block;max-width:100%}
       <p>シーン見出しのドラッグでシーンごと一括移動、<span class="help-kbd">▾</span> で折りたたみできます。上部の「横長 / 縦積み / 4コマ」でコマ割り表示を切り替えられます。</p>
       <p>操作を間違えたら <span class="help-kbd">⌘Z</span>（Windows: <span class="help-kbd">Ctrl+Z</span>）で元に戻す、<span class="help-kbd">⌘⇧Z</span>（<span class="help-kbd">Ctrl+Y</span>）でやり直しできます（最大10回・上部の ↩ ↪ ボタンでも可）。テキスト入力中の文字単位の取り消しは、各入力欄内で通常どおり <span class="help-kbd">⌘Z</span> が使えます。</p>
 
-      <h3>演者名・撮影場所と表示項目</h3>
-      <p>各コマのカメラワークの下に<b>演者名</b>と<b>撮影場所</b>を入力できます。一度入力した内容は<b>候補として表示</b>されるため、同じ演者・同じロケが続く場合は選ぶだけで入力できます（入力欄をクリックすると候補が出ます）。</p>
+      <h3>演者名・撮影場所・機材と表示項目</h3>
+      <p>各コマのカメラワークの下に<b>演者名</b>と<b>撮影場所</b>を入力できます。一度入力した内容は<b>候補として表示</b>されるため、同じ演者・同じロケが続く場合は選ぶだけで入力できます。</p>
+      <p><b>機材</b>は登録した一覧からチェックで選びます。「＋選択」を押すとリストが開き、下の欄から新しい機材を<b>種類（カメラ／音声／照明／支持／その他）</b>とあわせて登録できます。登録した機材は<b>他の案件でもそのまま使えます</b>（社内の機材リストとして育てていけます）。自由入力ではなく選択式にしているのは、表記ゆれを防いで準備リストで正しく集計するためです。</p>
+      <p>初期状態では Osmo Pocket 3／広角レンズ／DJI Mic 2（No.1・No.2）／照明／レフ板／Osmo ミニ三脚／三脚／バッテリーハンドル／予備バッテリー が登録されています。不要なものは ✕ で削除してください。種類で分かれて表示されるので、<b>音声機材の入れ忘れ</b>などに気づきやすくなります。</p>
       <p>案件によって使わない項目は、上部の<b>「表示項目」</b>からチェックを外すと入力欄が隠れます。設定は<b>絵コンテごと</b>に保存されるので、他の案件には影響しません。チェックを外した項目は<b>PDF・CSVにも出力されません</b>。</p>
-      <p>PDFではカメラワーク欄に 👤演者名・📍撮影場所 が併記され、CSVにはそれぞれ独立した列として書き出されるので、撮影スケジュールの作成にそのまま使えます。</p>
+      <p>PDFではカメラワーク欄に 👤演者名・📍撮影場所・🎬機材 が併記され、CSVにはそれぞれ独立した列として書き出されます。</p>
+
+      <h3>香盤表</h3>
+      <p>上部の<b>「絵コンテ / 香盤表」</b>で画面を切り替えます。<b>「絵コンテから取り込み」</b>を押すと、撮影場所ごと（またはカットごと）に行が作られ、カット番号・演者・機材が自動で入ります。</p>
+      <p><b>開始時刻と各行の所要時間を入れると、以降の時刻が自動で積み上がります。</b>行を並べ替えたり所要時間を変えると、全体の時刻がその場で再計算されます。「＋行を追加」で移動・休憩・セッティングなどの行も挟めます（区分を「その他」にすると色が変わります）。備考欄は当日のメモにお使いください。</p>
+      <div class="help-note"><b>絵コンテを直した後にもう一度「取り込み」を押しても、入力済みの時刻・備考は消えません。</b>新しいカットの行が追加され、絵コンテから消えたカットの行には「絵コンテから削除済」の印が付きます（自動では消さないので、確認してから削除してください）。</div>
+      <p>書き出しは<b>PDF（A4横）</b>と<b>CSV</b>に対応しています。現場に持っていく用紙としても、スプレッドシートでの調整用としても使えます。</p>
+
+      <h3>準備リスト（撮影場所別）</h3>
+      <p><b>書き出し → 準備リスト（撮影場所別）</b>を開くと、撮影場所ごとに<b>該当カット番号・必要機材・演者・合計尺</b>がまとめて表示されます。冒頭には全体で必要な機材と演者の一覧も出るので、機材手配やキャスティングの確認に使えます。</p>
+      <p>そのまま<b>CSVで書き出し</b>て香盤表づくりの下地にしたり、<b>テキストでコピー</b>してSlackやメールで共有できます。カット番号は「#1-3, 7」のようにまとめて表示されます。</p>
 
       <h3>変更履歴（前の状態に戻す）</h3>
       <p>上部の<b>「履歴」</b>から、過去の版に日時を選んで戻せます。編集中は<b>数分ごとに自動で記録</b>され、区切りのよいところで<b>「現在の版を保存」</b>を押せば名前付きで残せます（例: クライアント提出版）。</p>
@@ -1036,6 +1233,23 @@ img{display:block;max-width:100%}
 <input type="file" id="imgFileInput" accept="image/*" class="visually-hidden" aria-hidden="true" tabindex="-1">
 <input type="file" id="refFileInput" accept="image/*" class="visually-hidden" aria-hidden="true" tabindex="-1">
 <input type="file" id="bulkFileInput" accept="image/*" multiple class="visually-hidden" aria-hidden="true" tabindex="-1">
+<div class="equip-pop" id="equipPop" role="dialog" aria-label="機材を選択">
+  <div class="ep-head">機材を選択<button type="button" class="icon-btn" id="btnEquipClose" aria-label="閉じる">✕</button></div>
+  <div class="ep-list" id="equipPopList"></div>
+  <div class="ep-add">
+    <input id="equipNew" type="text" placeholder="機材名を登録" aria-label="登録する機材名">
+    <select id="equipNewCat" aria-label="機材の種類">
+      <option value="">未分類</option>
+      <option value="カメラ">カメラ</option>
+      <option value="音声">音声</option>
+      <option value="照明">照明</option>
+      <option value="支持">支持</option>
+      <option value="その他">その他</option>
+    </select>
+    <button type="button" id="btnEquipAdd">登録</button>
+  </div>
+</div>
+
 <datalist id="locationList"></datalist>
 <datalist id="castList"></datalist>
 <div class="toast-area" id="toastArea" aria-live="polite"></div>
@@ -1058,7 +1272,8 @@ const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(
 
 const newCut = (partial = {}) => ({
   id: uid(), image: null, imageSrc: null, imageTf: null, refImage: null,
-  content: "", dialog: "", telop: "", camera: "", location: "", cast: "", sec: null, prompt: "", ...partial
+  content: "", dialog: "", telop: "", camera: "", location: "", cast: "", equipment: [],
+  sec: null, prompt: "", ...partial
 });
 const newScene = (name, cuts) => ({
   id: uid(), name: name || "", collapsed: false, cuts: cuts || [newCut()]
@@ -1069,7 +1284,8 @@ let state = {
     title: "", client: "", author: "", date: new Date().toISOString().slice(0, 10),
     fps: 30, targetSec: 30, naRate: 6, template: "wide",
     toneRefs: [], imgStyle: "", imgModel: "gemini-3.1-flash-image",
-    fields: { cast: true, location: true }   /* 絵コンテごとの表示項目 */
+    fields: { cast: true, location: true, equipment: true },  /* 絵コンテごとの表示項目 */
+    equipmentList: []                                          /* 機材マスタ（全案件共通で引き継ぐ） */
   },
   scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])]
 };
@@ -1627,12 +1843,115 @@ const totalSeconds = () => totalFrames() / fps();
 /* ---------------- 表示項目（絵コンテごと） ---------------- */
 const OPTIONAL_FIELDS = [
   { key: "cast", label: "演者名" },
-  { key: "location", label: "撮影場所" }
+  { key: "location", label: "撮影場所" },
+  { key: "equipment", label: "機材" }
 ];
 function showField(key) {
-  if (!state.meta.fields) state.meta.fields = { cast: true, location: true };
+  if (!state.meta.fields) state.meta.fields = { cast: true, location: true, equipment: true };
   return state.meta.fields[key] !== false;
 }
+
+/* ---------------- 機材マスタ（全案件共通・種類つき） ---------------- */
+const LS_EQUIP = "tsugu_sb_equipment";
+const EQUIP_CATS = ["カメラ", "音声", "照明", "支持", "その他"];
+const DEFAULT_EQUIPMENT = [
+  { name: "Osmo Pocket 3", cat: "カメラ" },
+  { name: "広角レンズ（Pocket 3用）", cat: "カメラ" },
+  { name: "DJI Mic 2（No.1）", cat: "音声" },
+  { name: "DJI Mic 2（No.2）", cat: "音声" },
+  { name: "照明", cat: "照明" },
+  { name: "レフ板", cat: "照明" },
+  { name: "Osmo ミニ三脚", cat: "支持" },
+  { name: "三脚", cat: "支持" },
+  { name: "バッテリーハンドル", cat: "その他" },
+  { name: "予備バッテリー", cat: "その他" }
+];
+
+/* 旧形式（文字列の配列）から種類つき形式へ移行 */
+function normalizeEquip(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(v => (typeof v === "string")
+    ? { name: v, cat: "" }
+    : { name: String(v && v.name || ""), cat: String(v && v.cat || "") }
+  ).filter(v => v.name);
+}
+function equipmentList() {
+  state.meta.equipmentList = normalizeEquip(state.meta.equipmentList);
+  return state.meta.equipmentList;
+}
+const equipNames = () => equipmentList().map(e => e.name);
+function equipCatOf(name) {
+  const e = equipmentList().find(x => x.name === name);
+  return (e && e.cat) || "";
+}
+/* 種類ごとにまとめる（登録順を保つ） */
+function groupByCat(names) {
+  const out = [];
+  EQUIP_CATS.concat([""]).forEach(cat => {
+    const items = names.filter(n => (equipCatOf(n) || "") === cat);
+    if (items.length) out.push({ cat: cat || "未分類", items });
+  });
+  return out;
+}
+/* localStorage側のマスタ（案件をまたいで引き継ぐ） */
+function readEquipMaster() {
+  if (!storageOK) return null;
+  try {
+    const v = JSON.parse(localStorage.getItem(LS_EQUIP));
+    return Array.isArray(v) ? normalizeEquip(v) : null;
+  } catch (e) { return null; }
+}
+function writeEquipMaster(list) {
+  if (!storageOK) return;
+  try { localStorage.setItem(LS_EQUIP, JSON.stringify(list)); } catch (e) {}
+}
+/* プロジェクトを開いた時: 空ならマスタから、入っていればマスタへ反映 */
+function syncEquipmentMaster() {
+  const master = readEquipMaster();
+  const list = equipmentList();
+  if (!list.length) {
+    state.meta.equipmentList = (master && master.length)
+      ? JSON.parse(JSON.stringify(master))
+      : JSON.parse(JSON.stringify(DEFAULT_EQUIPMENT));
+    writeEquipMaster(state.meta.equipmentList);
+  } else {
+    /* マスタに無い機材を取り込み、共通リストを育てる */
+    const merged = (master || []).slice();
+    list.forEach(v => {
+      const hit = merged.find(m => m.name === v.name);
+      if (!hit) merged.push({ name: v.name, cat: v.cat });
+      else if (!hit.cat && v.cat) hit.cat = v.cat;   /* 種類が後から付いたら反映 */
+    });
+    writeEquipMaster(merged);
+  }
+}
+function addEquipment(name, cat) {
+  const v = String(name || "").trim();
+  if (!v) return false;
+  const list = equipmentList();
+  if (list.some(e => e.name === v)) return false;
+  const entry = { name: v, cat: String(cat || "") };
+  list.push(entry);
+  const master = readEquipMaster() || [];
+  if (!master.some(e => e.name === v)) { master.push(entry); writeEquipMaster(master); }
+  return true;
+}
+function setEquipmentCat(name, cat) {
+  const e = equipmentList().find(x => x.name === name);
+  if (e) e.cat = String(cat || "");
+  const master = readEquipMaster() || [];
+  const m = master.find(x => x.name === name);
+  if (m) { m.cat = String(cat || ""); writeEquipMaster(master); }
+}
+function removeEquipment(name) {
+  state.meta.equipmentList = equipmentList().filter(v => v.name !== name);
+  writeEquipMaster((readEquipMaster() || []).filter(v => v.name !== name));
+  /* 各コマの選択からも外す */
+  state.scenes.forEach(s => s.cuts.forEach(c => {
+    if (Array.isArray(c.equipment)) c.equipment = c.equipment.filter(v => v !== name);
+  }));
+}
+const cutEquipment = (cut) => Array.isArray(cut.equipment) ? cut.equipment : [];
 
 /* ---------------- NA推定 ---------------- */
 function naCharCount(text) {
@@ -1692,6 +2011,7 @@ function undo() {
   state = JSON.parse(undoStack.pop());
   lastTypeKey = null;
   syncMetaInputs(); render(); updateUndoButtons();
+  if (typeof currentView !== "undefined" && currentView === "sched") setView("sched");
   toast("元に戻しました");
 }
 function redo() {
@@ -1701,6 +2021,7 @@ function redo() {
   state = JSON.parse(redoStack.pop());
   lastTypeKey = null;
   syncMetaInputs(); render(); updateUndoButtons();
+  if (typeof currentView !== "undefined" && currentView === "sched") setView("sched");
   toast("やり直しました");
 }
 function updateUndoButtons() {
@@ -1832,7 +2153,7 @@ function renderCut(cut, row) {
       <div class="field f-camera">
         <label>カメラワーク</label>
         <textarea data-field="camera" placeholder="FIX / PAN / ズームIN 等">${esc(cut.camera)}</textarea>
-        ${(showField("cast") || showField("location")) ? `
+        ${(showField("cast") || showField("location") || showField("equipment")) ? `
         <div class="shoot-row">
           ${showField("cast") ? `
           <div class="shoot-item">
@@ -1845,6 +2166,16 @@ function renderCut(cut, row) {
             <label>撮影場所</label>
             <input class="loc-input" type="text" data-field="location" list="locationList"
               placeholder="本社3F 会議室" value="${esc(cut.location || "")}" aria-label="撮影場所">
+          </div>` : ""}
+          ${showField("equipment") ? `
+          <div class="shoot-item equip-cell">
+            <label>機材</label>
+            <button type="button" class="equip-btn" data-act="pickEquip"
+              aria-label="機材を選択（現在 ${cutEquipment(cut).length}件）">
+              ${cutEquipment(cut).length
+                ? cutEquipment(cut).map(v => `<span class="equip-chip">${esc(v)}</span>`).join("")
+                : `<span class="equip-none">＋ 選択</span>`}
+            </button>
           </div>` : ""}
         </div>` : ""}
       </div>
@@ -1993,6 +2324,9 @@ boardEl.addEventListener("click", (e) => {
   } else if (act === "genImage") {
     e.stopPropagation();
     genImageForCut(loc.cut.id);
+  } else if (act === "pickEquip") {
+    e.stopPropagation();
+    openEquipPop(loc.cut.id, actEl);
   } else if (act === "pickRef") {
     pendingRefMode = loc.cut.id;
     $("#refFileInput").click();
@@ -2513,6 +2847,105 @@ $("#btnBulkApply").addEventListener("click", () => {
   toast(`${n}枚を取り込みました（⌘Zで元に戻せます）`);
 });
 
+/* ============================================================
+   機材の選択ポップアップ
+   ============================================================ */
+let equipTargetCutId = null;
+const equipPop = $("#equipPop");
+
+function openEquipPop(cutId, anchorEl) {
+  equipTargetCutId = cutId;
+  renderEquipPop();
+  equipPop.classList.add("open");
+  /* アンカーの近くに出す（画面外にはみ出さないよう調整） */
+  const r = anchorEl.getBoundingClientRect();
+  const w = 260, h = equipPop.offsetHeight || 300;
+  let left = Math.min(r.left, window.innerWidth - w - 12);
+  let top = r.bottom + 4;
+  if (top + h > window.innerHeight - 12) top = Math.max(12, r.top - h - 4);
+  equipPop.style.left = Math.max(12, left) + "px";
+  equipPop.style.top = top + "px";
+  $("#equipNew").value = "";
+}
+function closeEquipPop() {
+  equipPop.classList.remove("open");
+  equipTargetCutId = null;
+}
+function renderEquipPop() {
+  const loc = equipTargetCutId ? findCutLoc(equipTargetCutId) : null;
+  const selected = loc ? cutEquipment(loc.cut) : [];
+  const groups = groupByCat(equipNames());
+  $("#equipPopList").innerHTML = groups.length
+    ? groups.map(g => `
+      <div class="ep-cat">${esc(g.cat)}</div>
+      ${g.items.map(v => `
+      <label class="ep-item">
+        <input type="checkbox" data-equip="${esc(v)}" ${selected.indexOf(v) >= 0 ? "checked" : ""}>
+        <span>${esc(v)}</span>
+        <button type="button" class="ep-del" data-equip-del="${esc(v)}" aria-label="${esc(v)} をマスタから削除" title="マスタから削除">✕</button>
+      </label>`).join("")}`).join("")
+    : `<div class="ep-empty">機材が登録されていません。<br>下の欄から登録してください。</div>`;
+}
+
+$("#equipPopList").addEventListener("change", (e) => {
+  const cb = e.target.closest("[data-equip]");
+  if (!cb || !equipTargetCutId) return;
+  const loc = findCutLoc(equipTargetCutId);
+  if (!loc) return;
+  pushHistory("equip:" + loc.cut.id);
+  const name = cb.dataset.equip;
+  const cur = cutEquipment(loc.cut).slice();
+  if (cb.checked) { if (cur.indexOf(name) < 0) cur.push(name); }
+  else { const i = cur.indexOf(name); if (i >= 0) cur.splice(i, 1); }
+  /* 登録順に揃える */
+  loc.cut.equipment = equipNames().filter(v => cur.indexOf(v) >= 0);
+  const keep = equipTargetCutId;
+  render();
+  equipTargetCutId = keep;
+});
+$("#equipPopList").addEventListener("click", (e) => {
+  const del = e.target.closest("[data-equip-del]");
+  if (!del) return;
+  e.preventDefault();
+  const name = del.dataset.equipDel;
+  if (!confirm(`「${name}」を機材リストから削除します。\n各コマの選択からも外れます。よろしいですか？`)) return;
+  pushHistory();
+  removeEquipment(name);
+  const keep = equipTargetCutId;
+  render();
+  equipTargetCutId = keep;
+  renderEquipPop();
+});
+function doAddEquipment() {
+  const input = $("#equipNew");
+  const v = input.value.trim();
+  if (!v) return;
+  pushHistory();
+  if (!addEquipment(v, $("#equipNewCat").value)) { toast("すでに登録されています", true); return; }
+  /* 登録したらそのコマに選択済みとして入れる */
+  if (equipTargetCutId) {
+    const loc = findCutLoc(equipTargetCutId);
+    if (loc) {
+      const cur = cutEquipment(loc.cut).concat([v]);
+      loc.cut.equipment = equipNames().filter(x => cur.indexOf(x) >= 0);
+    }
+  }
+  input.value = "";
+  const keep = equipTargetCutId;
+  render();
+  equipTargetCutId = keep;
+  renderEquipPop();
+  toast(`「${v}」を登録しました（他の案件でも使えます）`);
+}
+$("#btnEquipAdd").addEventListener("click", doAddEquipment);
+$("#equipNew").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doAddEquipment(); } });
+$("#btnEquipClose").addEventListener("click", closeEquipPop);
+document.addEventListener("click", (e) => {
+  if (!equipPop.classList.contains("open")) return;
+  if (e.target.closest("#equipPop") || e.target.closest('[data-act="pickEquip"]')) return;
+  closeEquipPop();
+});
+
 $("#btnBulkImport").addEventListener("click", () => $("#bulkFileInput").click());
 $("#bulkFileInput").addEventListener("change", (e) => {
   const files = e.target.files;
@@ -2762,12 +3195,16 @@ document.addEventListener("click", (e) => {
     $("#btnExport").setAttribute("aria-expanded", "false");
     fieldsMenu.classList.remove("open");
     $("#btnFields").setAttribute("aria-expanded", "false");
+    const sm = document.getElementById("schedExportMenu");
+    if (sm) { sm.classList.remove("open"); $("#btnSchedExport").setAttribute("aria-expanded", "false"); }
   }
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     exportMenu.classList.remove("open");
     fieldsMenu.classList.remove("open");
+    const sm = document.getElementById("schedExportMenu");
+    if (sm) sm.classList.remove("open");
     closeCheckPanel();
     closeAiModal();
     closeProjModal();
@@ -2775,6 +3212,8 @@ document.addEventListener("keydown", (e) => {
     closeImageEditor();
     closeBulkModal();
     closeHistModal();
+    closePrepModal();
+    closeEquipPop();
   }
 });
 
@@ -2845,7 +3284,7 @@ $("#projList").addEventListener("click", (e) => {
   if (act === "open") {
     Promise.resolve(persistCurrentProject()).then(() => loadProject(id)).then(ok => {
       if (ok) {
-        syncMetaInputs(); render(); closeProjModal();
+        syncMetaInputs(); render(); setView("board"); closeProjModal();
         toast(`「${entry.title}」を開きました`);
       } else {
         toast("読込に失敗しました。データが破損している可能性があります。", true);
@@ -3569,12 +4008,14 @@ $("#btnCsv").addEventListener("click", () => {
   const header = ["No", "シーン", "カット内容", "セリフ・ナレーション", "テロップ", "カメラワーク"]
     .concat(showField("cast") ? ["演者名"] : [])
     .concat(showField("location") ? ["撮影場所"] : [])
+    .concat(showField("equipment") ? ["機材"] : [])
     .concat(["秒数", "IN(mm:ss:ff)", "OUT(mm:ss:ff)", "INフレーム", "OUTフレーム", "画像生成プロンプト"]);
   const lines = [header.map(q).join(",")];
   rows.forEach(r => {
     lines.push([r.no, r.scene.name, r.cut.content, r.cut.dialog, r.cut.telop || "", r.cut.camera]
       .concat(showField("cast") ? [r.cut.cast || ""] : [])
       .concat(showField("location") ? [r.cut.location || ""] : [])
+      .concat(showField("equipment") ? [cutEquipment(r.cut).join("／")] : [])
       .concat([
         r.cut.sec != null ? r.cut.sec : "",
         framesToTC(r.inF), framesToTC(r.outF), r.inF, r.outF, r.cut.prompt
@@ -3598,8 +4039,541 @@ function pdfShootExtra(cut) {
   const parts = [];
   if (showField("cast") && cut.cast) parts.push(`👤${esc(cut.cast)}`);
   if (showField("location") && cut.location) parts.push(`📍${esc(cut.location)}`);
+  if (showField("equipment") && cutEquipment(cut).length) parts.push(`🎬${esc(cutEquipment(cut).join("・"))}`);
   return parts.length ? `　<span style="color:#0f4c81">${parts.join("　")}</span>` : "";
 }
+
+/* ============================================================
+   準備リスト（撮影場所別の集計）
+   場所ごとに 該当カット / 必要機材 / 演者 / 合計尺 をまとめる。
+   香盤表づくりの下地として使う。
+   ============================================================ */
+function buildPrepData() {
+  const groups = [];
+  const byLoc = new Map();
+  flattenCuts().forEach(r => {
+    const key = (r.cut.location || "").trim() || "（撮影場所 未設定）";
+    if (!byLoc.has(key)) {
+      const g = { location: key, cuts: [], equipment: [], cast: [], frames: 0 };
+      byLoc.set(key, g);
+      groups.push(g);
+    }
+    const g = byLoc.get(key);
+    g.cuts.push(r.no);
+    g.frames += r.durF;
+    cutEquipment(r.cut).forEach(v => { if (g.equipment.indexOf(v) < 0) g.equipment.push(v); });
+    const c = (r.cut.cast || "").trim();
+    if (c && g.cast.indexOf(c) < 0) g.cast.push(c);
+  });
+  /* 全体サマリー */
+  const allEquip = [], allCast = [];
+  groups.forEach(g => {
+    g.equipment.forEach(v => { if (allEquip.indexOf(v) < 0) allEquip.push(v); });
+    g.cast.forEach(v => { if (allCast.indexOf(v) < 0) allCast.push(v); });
+  });
+  return { groups, allEquip, allCast };
+}
+
+/* カット番号を 1-3, 5 のように縮める */
+function compactNos(nos) {
+  const out = [];
+  let start = null, prev = null;
+  nos.slice().sort((a, b) => a - b).forEach(n => {
+    if (start === null) { start = prev = n; return; }
+    if (n === prev + 1) { prev = n; return; }
+    out.push(start === prev ? `${start}` : `${start}-${prev}`);
+    start = prev = n;
+  });
+  if (start !== null) out.push(start === prev ? `${start}` : `${start}-${prev}`);
+  return out.join(", ");
+}
+
+function renderPrepList() {
+  const { groups, allEquip, allCast } = buildPrepData();
+  const body = $("#prepBody");
+  if (!groups.length) {
+    body.innerHTML = `<div class="prep-empty">コマがありません。</div>`;
+    return;
+  }
+  const total = groups.reduce((a, g) => a + g.frames, 0);
+  body.innerHTML = `
+    <div class="prep-sum">
+      <b>撮影場所</b> ${groups.length}箇所 ／ <b>全体尺</b> ${(total / fps()).toFixed(1)}s<br>
+      <b>必要機材（全体）</b> ${allEquip.length
+        ? groupByCat(allEquip).map(g => `<span class="eq-cat">${esc(g.cat)}</span> ${esc(g.items.join("・"))}`).join("　／　")
+        : "—"}<br>
+      <b>演者（全体）</b> ${allCast.length ? esc(allCast.join("・")) : "—"}
+    </div>
+    ${groups.map(g => `
+    <div class="prep-group">
+      <h4>${esc(g.location)}<span class="pg-stat">${g.cuts.length}カット / ${(g.frames / fps()).toFixed(1)}s</span></h4>
+      <div class="prep-rows">
+        <div class="prep-line"><span class="pl-label">該当カット</span><span class="pl-val prep-cuts">#${esc(compactNos(g.cuts))}</span></div>
+        <div class="prep-line"><span class="pl-label">必要機材</span><span class="pl-val">${
+          g.equipment.length
+            ? groupByCat(g.equipment).map(gr =>
+                `<span class="eq-cat">${esc(gr.cat)}</span>` +
+                gr.items.map(v => `<span class="tag eq">${esc(v)}</span>`).join("")).join("")
+            : "—"}</span></div>
+        <div class="prep-line"><span class="pl-label">演者</span><span class="pl-val">${
+          g.cast.length ? g.cast.map(v => `<span class="tag">${esc(v)}</span>`).join("") : "—"}</span></div>
+      </div>
+    </div>`).join("")}`;
+}
+
+function prepAsText() {
+  const { groups, allEquip, allCast } = buildPrepData();
+  const total = groups.reduce((a, g) => a + g.frames, 0);
+  const lines = [
+    `【撮影準備リスト】${state.meta.title || "無題プロジェクト"}`,
+    `撮影場所 ${groups.length}箇所 / 全体尺 ${(total / fps()).toFixed(1)}秒`,
+    `必要機材（全体）: ${allEquip.join("・") || "—"}`,
+    `演者（全体）: ${allCast.join("・") || "—"}`,
+    ""
+  ];
+  groups.forEach(g => {
+    lines.push(`■ ${g.location}（${g.cuts.length}カット / ${(g.frames / fps()).toFixed(1)}秒）`);
+    lines.push(`　カット: #${compactNos(g.cuts)}`);
+    lines.push(`　機材: ${g.equipment.length
+      ? groupByCat(g.equipment).map(gr => `[${gr.cat}] ${gr.items.join("・")}`).join(" / ") : "—"}`);
+    lines.push(`　演者: ${g.cast.join("・") || "—"}`);
+    lines.push("");
+  });
+  return lines.join("\n");
+}
+
+function openPrepModal() {
+  exportMenu.classList.remove("open");
+  renderPrepList();
+  $("#prepBackdrop").classList.add("open");
+}
+function closePrepModal() { $("#prepBackdrop").classList.remove("open"); }
+document.getElementById("btnPrepList").addEventListener("click", openPrepModal);
+document.getElementById("btnPrepClose").addEventListener("click", closePrepModal);
+document.getElementById("prepBackdrop").addEventListener("click", (e) => {
+  if (e.target.id === "prepBackdrop") closePrepModal();
+});
+document.getElementById("btnPrepCopy").addEventListener("click", () => {
+  copyText(prepAsText()).then(() => toast("準備リストをコピーしました"));
+});
+document.getElementById("btnPrepCsv").addEventListener("click", () => {
+  const { groups } = buildPrepData();
+  if (!groups.length) { toast("コマがありません", true); return; }
+  const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const lines = [["撮影場所", "カット数", "合計尺(秒)", "該当カット", "必要機材", "演者"].map(q).join(",")];
+  groups.forEach(g => {
+    lines.push([
+      g.location, g.cuts.length, (g.frames / fps()).toFixed(1),
+      "#" + compactNos(g.cuts), g.equipment.join("／"), g.cast.join("／")
+    ].map(q).join(","));
+  });
+  downloadBlob(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }),
+    fileBase() + "_準備リスト.csv");
+  toast("準備リストCSVを書き出しました");
+});
+
+/* ============================================================
+   香盤表
+   絵コンテから取り込み、当日の時刻・備考を書き込む。
+   開始時刻＋各行の所要時間から時刻を自動計算する。
+   絵コンテを直した時は「差分で取り込み」して手入力を壊さない。
+   ============================================================ */
+function schedule() {
+  if (!state.schedule || typeof state.schedule !== "object") {
+    state.schedule = { date: "", startTime: "09:00", unit: "location", rows: [] };
+  }
+  if (!Array.isArray(state.schedule.rows)) state.schedule.rows = [];
+  return state.schedule;
+}
+const newSchedRow = (p) => Object.assign({
+  id: uid(), type: "shoot", srcKey: "", label: "", cutNos: [],
+  cast: [], equipment: [], minutes: 30, note: "", stale: false
+}, p || {});
+
+function parseHM(s) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || "").trim());
+  if (!m) return 9 * 60;
+  return Math.min(24 * 60 - 1, Math.max(0, Number(m[1]) * 60 + Number(m[2])));
+}
+function fmtHM(min) {
+  const m = Math.max(0, Math.round(min));
+  return String(Math.floor(m / 60) % 48).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+}
+/* 各行の開始・終了時刻を積み上げで算出 */
+function computeSchedTimes() {
+  const s = schedule();
+  let t = parseHM(s.startTime);
+  s.rows.forEach(r => {
+    r._start = t;
+    t += Math.max(0, Number(r.minutes) || 0);
+    r._end = t;
+  });
+  return t;
+}
+
+/* 絵コンテから差分で取り込む（既存行の時刻・備考は保持） */
+function generateSchedule(unit) {
+  const s = schedule();
+  s.unit = unit || s.unit || "location";
+  const rows = flattenCuts();
+  const incoming = [];
+
+  if (s.unit === "location") {
+    const byLoc = new Map();
+    rows.forEach(r => {
+      const key = (r.cut.location || "").trim() || "（撮影場所 未設定）";
+      if (!byLoc.has(key)) byLoc.set(key, { srcKey: "loc:" + key, label: key, cutNos: [], cast: [], equipment: [], frames: 0 });
+      const g = byLoc.get(key);
+      g.cutNos.push(r.no);
+      g.frames += r.durF;
+      cutEquipment(r.cut).forEach(v => { if (g.equipment.indexOf(v) < 0) g.equipment.push(v); });
+      const c = (r.cut.cast || "").trim();
+      if (c && g.cast.indexOf(c) < 0) g.cast.push(c);
+    });
+    byLoc.forEach(g => incoming.push(g));
+  } else {
+    rows.forEach(r => incoming.push({
+      srcKey: "cut:" + r.cut.id,
+      label: (r.cut.content || "").slice(0, 40) || `カット #${r.no}`,
+      cutNos: [r.no],
+      cast: (r.cut.cast || "").trim() ? [(r.cut.cast || "").trim()] : [],
+      equipment: cutEquipment(r.cut).slice(),
+      frames: r.durF
+    }));
+  }
+
+  const existing = new Map(s.rows.filter(r => r.srcKey).map(r => [r.srcKey, r]));
+  const seen = new Set();
+  let added = 0, updated = 0;
+
+  incoming.forEach(g => {
+    seen.add(g.srcKey);
+    const cur = existing.get(g.srcKey);
+    /* 所要時間の目安: カット数×10分（最低15分）。既存行は触らない */
+    const guess = Math.max(15, g.cutNos.length * 10);
+    if (cur) {
+      cur.label = g.label;
+      cur.cutNos = g.cutNos;
+      cur.cast = g.cast;
+      cur.equipment = g.equipment;
+      cur.stale = false;
+      updated++;
+    } else {
+      s.rows.push(newSchedRow({
+        type: "shoot", srcKey: g.srcKey, label: g.label,
+        cutNos: g.cutNos, cast: g.cast, equipment: g.equipment, minutes: guess
+      }));
+      added++;
+    }
+  });
+
+  /* 絵コンテから消えた行には印を付ける（勝手に削除しない） */
+  let stale = 0;
+  s.rows.forEach(r => {
+    if (r.type === "shoot" && r.srcKey && !seen.has(r.srcKey)) { r.stale = true; stale++; }
+  });
+  return { added, updated, stale };
+}
+
+function renderSchedule() {
+  const s = schedule();
+  const endMin = computeSchedTimes();
+  const tbl = $("#schedTable");
+
+  const shootRows = s.rows.filter(r => r.type === "shoot").length;
+  const totalMin = s.rows.reduce((a, r) => a + (Number(r.minutes) || 0), 0);
+  $("#schedSummary").textContent = s.rows.length
+    ? `${s.rows.length}行（撮影 ${shootRows}）／ 所要 ${Math.floor(totalMin / 60)}時間${totalMin % 60}分 ／ 終了 ${fmtHM(endMin)}`
+    : "";
+
+  if (!s.rows.length) {
+    tbl.innerHTML = `<div class="sched-empty">
+      香盤表はまだ空です。<br>
+      <b>「絵コンテから取り込み」</b>を押すと、撮影場所ごとに行が作られます。<br>
+      そのあと所要時間を入れると、以降の時刻が自動で計算されます。
+    </div>`;
+    return;
+  }
+
+  tbl.innerHTML = `
+    <div class="sched-hdr">
+      <span></span><span>時刻</span><span>区分</span><span>内容・場所</span>
+      <span>カット</span><span>演者</span><span>機材</span><span>所要(分)</span><span>備考</span><span></span>
+    </div>` +
+    s.rows.map(r => `
+    <div class="sched-row ${r.type === "other" ? "type-other" : ""} ${r.stale ? "stale" : ""}"
+         data-row-id="${r.id}" data-drag="schedrow">
+      <span class="sr-handle" title="ドラッグで並べ替え">⠿</span>
+      <span class="sched-time">${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small></span>
+      <span class="sr-type">
+        <select data-srow="type">
+          <option value="shoot" ${r.type === "shoot" ? "selected" : ""}>撮影</option>
+          <option value="other" ${r.type === "other" ? "selected" : ""}>その他</option>
+        </select>
+      </span>
+      <span><input type="text" data-srow="label" value="${esc(r.label)}" placeholder="${r.type === "other" ? "移動 / 休憩 / セッティング" : "場所・内容"}">${
+        r.stale ? `<span class="stale-badge">絵コンテから削除済</span>` : ""}</span>
+      <span class="sr-cuts">${r.cutNos && r.cutNos.length ? "#" + esc(compactNos(r.cutNos)) : "—"}</span>
+      <span class="sr-cast sr-tags">${(r.cast || []).length ? (r.cast || []).map(v => `<span class="tag">${esc(v)}</span>`).join("") : "—"}</span>
+      <span class="sr-equip sr-tags">${(r.equipment || []).length ? (r.equipment || []).map(v => `<span class="tag eq">${esc(v)}</span>`).join("") : "—"}</span>
+      <span><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}" aria-label="所要時間（分）"></span>
+      <span class="sr-note"><textarea data-srow="note" rows="1" placeholder="当日メモ">${esc(r.note || "")}</textarea></span>
+      <span><button type="button" class="icon-btn del" data-srow-act="del" aria-label="この行を削除">✕</button></span>
+    </div>`).join("");
+}
+
+/* 入力（フォーカスを保つため時刻だけ更新） */
+$("#schedTable").addEventListener("input", (e) => {
+  const key = e.target.dataset.srow;
+  if (!key) return;
+  const rowEl = e.target.closest("[data-row-id]");
+  const r = schedule().rows.find(x => x.id === rowEl.dataset.rowId);
+  if (!r) return;
+  if (key === "minutes") {
+    pushHistory("schedmin:" + r.id);
+    r.minutes = Math.max(0, Number(e.target.value) || 0);
+    refreshSchedTimes();
+  } else {
+    pushHistory(key + ":" + r.id);
+    r[key] = e.target.value;
+    scheduleSave();
+  }
+});
+$("#schedTable").addEventListener("change", (e) => {
+  if (e.target.dataset.srow !== "type") return;
+  const rowEl = e.target.closest("[data-row-id]");
+  const r = schedule().rows.find(x => x.id === rowEl.dataset.rowId);
+  if (!r) return;
+  pushHistory();
+  r.type = e.target.value;
+  renderSchedule();
+  scheduleSave();
+});
+function refreshSchedTimes() {
+  computeSchedTimes();
+  const s = schedule();
+  $$("#schedTable .sched-row").forEach(el => {
+    const r = s.rows.find(x => x.id === el.dataset.rowId);
+    if (!r) return;
+    $(".sched-time", el).innerHTML = `${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small>`;
+  });
+  const totalMin = s.rows.reduce((a, r) => a + (Number(r.minutes) || 0), 0);
+  const shootRows = s.rows.filter(r => r.type === "shoot").length;
+  $("#schedSummary").textContent =
+    `${s.rows.length}行（撮影 ${shootRows}）／ 所要 ${Math.floor(totalMin / 60)}時間${totalMin % 60}分 ／ 終了 ${fmtHM(parseHM(s.startTime) + totalMin)}`;
+  scheduleSave();
+}
+$("#schedTable").addEventListener("click", (e) => {
+  if (!e.target.closest('[data-srow-act="del"]')) return;
+  const rowEl = e.target.closest("[data-row-id]");
+  pushHistory();
+  schedule().rows = schedule().rows.filter(r => r.id !== rowEl.dataset.rowId);
+  renderSchedule();
+  scheduleSave();
+  toast("行を削除しました（⌘Zで戻せます）");
+});
+
+/* 行の並べ替え（ハンドルを掴んだ時だけ） */
+let schedDragId = null;
+$("#schedTable").addEventListener("pointerdown", (e) => {
+  const h = e.target.closest(".sr-handle");
+  if (!h) return;
+  const el = h.closest("[data-row-id]");
+  if (el) el.draggable = true;
+});
+document.addEventListener("pointerup", () => {
+  $$("#schedTable [data-row-id]").forEach(el => { el.draggable = false; });
+});
+$("#schedTable").addEventListener("dragstart", (e) => {
+  const el = e.target.closest("[data-row-id]");
+  if (!el || !el.draggable) return;
+  schedDragId = el.dataset.rowId;
+  el.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+  try { e.dataTransfer.setData("text/plain", schedDragId); } catch (err) {}
+});
+$("#schedTable").addEventListener("dragover", (e) => {
+  if (!schedDragId) return;
+  e.preventDefault();
+  const over = e.target.closest("[data-row-id]");
+  $$("#schedTable .sched-drop").forEach(el => el.remove());
+  if (!over || over.dataset.rowId === schedDragId) return;
+  const rect = over.getBoundingClientRect();
+  const ind = document.createElement("div");
+  ind.className = "sched-drop";
+  over.parentNode.insertBefore(ind, (e.clientY - rect.top) < rect.height / 2 ? over : over.nextSibling);
+});
+$("#schedTable").addEventListener("drop", (e) => {
+  if (!schedDragId) return;
+  e.preventDefault();
+  const s = schedule();
+  const ind = $("#schedTable .sched-drop");
+  let insertIndex = s.rows.length;
+  if (ind) {
+    insertIndex = 0;
+    $$("#schedTable .sched-row").forEach(el => {
+      if (ind.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING) insertIndex++;
+    });
+  }
+  const from = s.rows.findIndex(r => r.id === schedDragId);
+  if (from < 0) return;
+  pushHistory();
+  const [item] = s.rows.splice(from, 1);
+  if (from < insertIndex) insertIndex--;
+  s.rows.splice(Math.max(0, Math.min(insertIndex, s.rows.length)), 0, item);
+  schedDragId = null;
+  renderSchedule();
+  scheduleSave();
+});
+$("#schedTable").addEventListener("dragend", () => {
+  schedDragId = null;
+  $$("#schedTable .sched-drop").forEach(el => el.remove());
+  $$("#schedTable .dragging").forEach(el => el.classList.remove("dragging"));
+  $$("#schedTable [data-row-id]").forEach(el => { el.draggable = false; });
+});
+
+/* ヘッダ操作 */
+$("#schedDate").addEventListener("input", (e) => { pushHistory("scheddate"); schedule().date = e.target.value; scheduleSave(); });
+$("#schedStart").addEventListener("input", (e) => { pushHistory("schedstart"); schedule().startTime = e.target.value || "09:00"; refreshSchedTimes(); });
+$("#btnSchedAddRow").addEventListener("click", () => {
+  pushHistory();
+  schedule().rows.push(newSchedRow({ type: "other", label: "", minutes: 15 }));
+  renderSchedule();
+  scheduleSave();
+});
+$("#btnSchedGen").addEventListener("click", () => {
+  const s = schedule();
+  const has = s.rows.length > 0;
+  let unit = s.unit || "location";
+  if (!has) {
+    unit = confirm("撮影場所ごとにまとめますか？\n\nOK = 撮影場所ごと（推奨）\nキャンセル = カットごと（1カット1行）")
+      ? "location" : "cut";
+  }
+  pushHistory();
+  const res = generateSchedule(unit);
+  renderSchedule();
+  scheduleSave();
+  const msg = [];
+  if (res.added) msg.push(`${res.added}行を追加`);
+  if (res.updated) msg.push(`${res.updated}行を更新`);
+  if (res.stale) msg.push(`${res.stale}行に「削除済」の印`);
+  toast(msg.length ? msg.join(" / ") + "（入力済みの時刻・備考は保持しました）" : "変更はありませんでした");
+});
+
+/* 画面切替 */
+let currentView = "board";
+function setView(v) {
+  currentView = v;
+  $$(".view-seg [data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
+  $(".board-wrap").hidden = v !== "board";
+  $("#schedWrap").hidden = v !== "sched";
+  if (v === "sched") {
+    const s = schedule();
+    $("#schedDate").value = s.date || state.meta.date || "";
+    $("#schedStart").value = s.startTime || "09:00";
+    renderSchedule();
+  }
+}
+$$(".view-seg [data-view]").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+
+/* 香盤表の書き出しメニュー */
+const schedExportMenu = $("#schedExportMenu");
+$("#btnSchedExport").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = schedExportMenu.classList.toggle("open");
+  $("#btnSchedExport").setAttribute("aria-expanded", String(open));
+});
+
+/* 香盤表 CSV */
+$("#btnSchedCsv").addEventListener("click", () => {
+  schedExportMenu.classList.remove("open");
+  const s = schedule();
+  if (!s.rows.length) { toast("香盤表が空です", true); return; }
+  computeSchedTimes();
+  const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const lines = [["No", "開始", "終了", "所要(分)", "区分", "内容・場所", "カット", "演者", "機材", "備考", "状態"].map(q).join(",")];
+  s.rows.forEach((r, i) => {
+    lines.push([
+      i + 1, fmtHM(r._start), fmtHM(r._end), Number(r.minutes) || 0,
+      r.type === "other" ? "その他" : "撮影", r.label,
+      (r.cutNos || []).length ? "#" + compactNos(r.cutNos) : "",
+      (r.cast || []).join("／"), (r.equipment || []).join("／"), r.note || "",
+      r.stale ? "絵コンテから削除済" : ""
+    ].map(q).join(","));
+  });
+  lines.push("");
+  lines.push([q("# 作品"), q(state.meta.title), q("撮影日"), q(s.date || ""), q("開始"), q(s.startTime || ""),
+    q("終了"), q(fmtHM(parseHM(s.startTime) + s.rows.reduce((a, r) => a + (Number(r.minutes) || 0), 0)))].join(","));
+  downloadBlob(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }),
+    fileBase() + "_香盤表.csv");
+  toast("香盤表CSVを書き出しました");
+});
+
+/* 香盤表 PDF（A4横） */
+const SCHED_ROWS_PER_PAGE = 16;
+$("#btnSchedPdf").addEventListener("click", async () => {
+  schedExportMenu.classList.remove("open");
+  const s = schedule();
+  if (!s.rows.length) { toast("香盤表が空です", true); return; }
+  if (!window.jspdf || !window.html2canvas) {
+    toast("PDFライブラリを読み込めていません。ネットワーク接続後にページを再読込してください。", true);
+    return;
+  }
+  computeSchedTimes();
+  const btn = $("#btnSchedPdf");
+  btn.disabled = true;
+  toast("PDFを生成しています…");
+  try {
+    const stage = $("#pdfStage");
+    const pages = [];
+    for (let i = 0; i < s.rows.length; i += SCHED_ROWS_PER_PAGE) pages.push(s.rows.slice(i, i + SCHED_ROWS_PER_PAGE));
+    const totalMin = s.rows.reduce((a, r) => a + (Number(r.minutes) || 0), 0);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+
+    for (let p = 0; p < pages.length; p++) {
+      stage.innerHTML = `
+      <div class="pdf-sched">
+        <div class="ps-title">
+          <div class="ps-main">香盤表 — ${esc(state.meta.title || "無題プロジェクト")}</div>
+          <div class="ps-meta">撮影日 ${esc(s.date || "—")} ／ 開始 ${esc(s.startTime || "—")} ／ 終了 ${fmtHM(parseHM(s.startTime) + totalMin)} ／ 所要 ${Math.floor(totalMin / 60)}h${totalMin % 60}m</div>
+        </div>
+        <table class="ps-table">
+          <thead><tr>
+            <th style="width:28px">No</th><th style="width:76px">時刻</th><th style="width:40px">所要</th>
+            <th style="width:46px">区分</th><th>内容・場所</th><th style="width:74px">カット</th>
+            <th style="width:92px">演者</th><th style="width:150px">機材</th><th style="width:150px">備考</th>
+          </tr></thead>
+          <tbody>
+          ${pages[p].map((r, i) => `
+            <tr class="${r.type === "other" ? "ps-other" : ""}">
+              <td class="ps-c">${p * SCHED_ROWS_PER_PAGE + i + 1}</td>
+              <td class="ps-mono">${fmtHM(r._start)}<br>〜${fmtHM(r._end)}</td>
+              <td class="ps-c ps-mono">${Number(r.minutes) || 0}分</td>
+              <td class="ps-c">${r.type === "other" ? "その他" : "撮影"}</td>
+              <td>${esc(r.label)}${r.stale ? "（絵コンテから削除済）" : ""}</td>
+              <td class="ps-mono">${(r.cutNos || []).length ? "#" + esc(compactNos(r.cutNos)) : "—"}</td>
+              <td>${esc((r.cast || []).join("・")) || "—"}</td>
+              <td>${esc((r.equipment || []).join("・")) || "—"}</td>
+              <td>${esc(r.note || "")}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+        <div class="ps-foot"><span>香盤表 — ${esc(state.meta.title || "無題プロジェクト")}</span><span>${p + 1} / ${pages.length}</span></div>
+      </div>`;
+      const canvas = await window.html2canvas($(".pdf-sched", stage), { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      if (p > 0) doc.addPage();
+      doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 297, 210);
+    }
+    stage.innerHTML = "";
+    doc.save(fileBase() + "_香盤表.pdf");
+    toast(`香盤表PDFを書き出しました（${pages.length}ページ）`);
+  } catch (e) {
+    toast("PDF生成に失敗: " + e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 /* ---- PDF 書き出し（A4縦・絵コンテ用紙） ---- */
 const PDF_CUTS_PER_PAGE = 4;
@@ -3694,7 +4668,8 @@ function syncMetaInputs() {
   $("#fpsSelect").value = String(state.meta.fps);
   $("#naRate").value = state.meta.naRate;
   $$(".seg [data-tpl]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tpl === state.meta.template)));
-  if (!state.meta.fields) state.meta.fields = { cast: true, location: true };
+  if (!state.meta.fields) state.meta.fields = { cast: true, location: true, equipment: true };
+  syncEquipmentMaster();
   syncFieldChecks();
   if (!state.meta.toneRefs) state.meta.toneRefs = [];
   if (!state.meta.imgModel) state.meta.imgModel = "gemini-3.1-flash-image";
