@@ -64,6 +64,7 @@ img{display:block;max-width:100%}
 .brand{display:flex;flex-direction:column;line-height:1.2;min-width:150px}
 .brand b{font-size:var(--fs-lg);letter-spacing:.14em}
 .brand span{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.28em}
+.brand .app-ver{font-size:10px;color:var(--ink-3);letter-spacing:.02em;margin-top:1px}
 .meta-fields{display:flex;gap:10px;flex-wrap:wrap;flex:1;min-width:220px}
 .meta-field{display:flex;flex-direction:column;gap:1px}
 .meta-field label{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.08em}
@@ -291,6 +292,19 @@ img{display:block;max-width:100%}
   min-height:52px;font-size:var(--fs-sm);line-height:1.55;background:var(--surface-dim);
 }
 .field textarea:focus{border-color:var(--accent);background:#fff}
+.field-check{
+  display:flex;align-items:center;gap:7px;padding:7px 10px;font-size:var(--fs-sm);
+  cursor:pointer;border-radius:3px;
+}
+.field-check:hover{background:var(--accent-weak)}
+.shoot-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.shoot-item{display:flex;flex-direction:column;gap:2px;flex:1 1 92px;min-width:0}
+.shoot-item label{font-size:var(--fs-xs);color:var(--ink-3);letter-spacing:.08em}
+.field input.loc-input{
+  border:1px solid var(--line);border-radius:3px;padding:5px 7px;
+  font-size:var(--fs-sm);background:var(--surface-dim);width:100%;min-width:0;
+}
+.field input.loc-input:focus{border-color:var(--accent);background:#fff}
 .na-est{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-3)}
 .na-est.over{color:var(--err);font-weight:700}
 
@@ -525,6 +539,27 @@ img{display:block;max-width:100%}
 .help-listlabel{font-size:var(--fs-sm);font-weight:700;margin:10px 0 4px}
 .help-listlabel.ng{color:var(--err)} .help-listlabel.ok{color:var(--ok)} .help-listlabel.tip{color:var(--accent)}
 
+/* 変更履歴 */
+.hist-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.hist-note{font-size:var(--fs-xs);color:var(--ink-3)}
+.hist-list{max-height:56vh;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius)}
+.hist-row{
+  display:flex;align-items:center;gap:12px;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap;
+}
+.hist-row:last-child{border-bottom:none}
+.hist-row:hover{background:var(--surface-dim)}
+.hist-row.current{background:var(--accent-weak)}
+.hist-row .h-when{font-family:var(--font-mono);font-size:var(--fs-sm);font-weight:700;white-space:nowrap}
+.hist-row .h-rel{font-size:var(--fs-xs);color:var(--ink-3);white-space:nowrap}
+.hist-row .h-info{flex:1;min-width:140px;font-size:var(--fs-xs);color:var(--ink-2);font-family:var(--font-mono)}
+.hist-row .h-name{
+  font-size:var(--fs-xs);color:var(--accent);border:1px solid var(--accent);
+  border-radius:3px;padding:0 6px;font-weight:600;
+}
+.hist-row .h-auto{font-size:var(--fs-xs);color:var(--ink-3)}
+.hist-row .btn{padding:4px 10px;font-size:var(--fs-xs)}
+.hist-empty{color:var(--ink-3);font-size:var(--fs-sm);text-align:center;padding:24px 0}
+
 /* プロジェクト一覧 */
 .proj-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .proj-list{max-height:56vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
@@ -587,7 +622,7 @@ img{display:block;max-width:100%}
 <!-- ============ 上部固定バー ============ -->
 <header class="topbar">
   <div class="topbar-row">
-    <div class="brand"><b>絵コンテ</b><span>STORYBOARD</span></div>
+    <div class="brand"><b>絵コンテ</b><span>STORYBOARD</span><span class="app-ver" id="appVer"></span></div>
     <div class="meta-fields">
       <div class="meta-field"><label for="projTitle">作品タイトル</label><input id="projTitle" placeholder="無題プロジェクト"></div>
       <div class="meta-field"><label for="projClient">クライアント</label><input id="projClient" placeholder="株式会社アクティブ"></div>
@@ -634,7 +669,17 @@ img{display:block;max-width:100%}
         </select>
         <span id="tcFormatNote">TC: mm:ss:ff</span>
       </span>
+      <div class="menu-wrap">
+        <button type="button" class="btn" id="btnFields" aria-haspopup="true" aria-expanded="false">表示項目 ▾</button>
+        <div class="menu" id="fieldsMenu" role="menu">
+          <div class="menu-note">この絵コンテで使う項目</div>
+          <label class="field-check"><input type="checkbox" data-fieldkey="cast"> 演者名</label>
+          <label class="field-check"><input type="checkbox" data-fieldkey="location"> 撮影場所</label>
+          <div class="menu-note" style="padding-top:6px">チェックを外すと入力欄が隠れ、PDF・CSVにも出力されません。</div>
+        </div>
+      </div>
       <span class="spacer"></span>
+      <button type="button" class="btn" id="btnHistory">履歴</button>
       <button type="button" class="btn" id="btnHelp" aria-haspopup="dialog">？ 使い方と注意事項</button>
       <button type="button" class="btn" id="btnProjects">プロジェクト</button>
       <button type="button" class="btn" id="btnCheck">チェック <span class="badge zero" id="checkBadge">0</span></button>
@@ -832,6 +877,27 @@ img{display:block;max-width:100%}
   </div>
 </div>
 
+<!-- ============ 変更履歴モーダル ============ -->
+<div class="modal-backdrop" id="histBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <div class="modal-head">
+      <h2 id="histTitle">変更履歴</h2>
+      <button type="button" class="icon-btn" id="btnHistClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hist-toolbar">
+        <button type="button" class="btn primary" id="btnSaveVersion">現在の版を保存</button>
+        <span class="hist-note" id="histNote"></span>
+      </div>
+      <div class="hist-list" id="histList"></div>
+      <p style="font-size:var(--fs-xs);color:var(--ink-3);margin-top:10px">
+        編集中は数分ごとに自動で版が記録されます。最大20版まで保存し、古い版から自動で削除されます。
+        長期保管したい版は「書き出し → JSON保存」でファイルに残してください。
+      </p>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 一括取込モーダル ============ -->
 <div class="modal-backdrop" id="bulkBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bulkTitle">
@@ -874,6 +940,16 @@ img{display:block;max-width:100%}
       <p>行左端の <b>⠿</b> をドラッグすると行が浮き、挿入位置が青いラインでハイライトされます。シーンをまたぐ移動も可能です。キーボード操作は各コマの <span class="help-kbd">↑</span> <span class="help-kbd">↓</span> ボタンで代替できます。<span class="help-kbd">⧉</span> で複製、<span class="help-kbd">✕</span> で削除します。</p>
       <p>シーン見出しのドラッグでシーンごと一括移動、<span class="help-kbd">▾</span> で折りたたみできます。上部の「横長 / 縦積み / 4コマ」でコマ割り表示を切り替えられます。</p>
       <p>操作を間違えたら <span class="help-kbd">⌘Z</span>（Windows: <span class="help-kbd">Ctrl+Z</span>）で元に戻す、<span class="help-kbd">⌘⇧Z</span>（<span class="help-kbd">Ctrl+Y</span>）でやり直しできます（最大10回・上部の ↩ ↪ ボタンでも可）。テキスト入力中の文字単位の取り消しは、各入力欄内で通常どおり <span class="help-kbd">⌘Z</span> が使えます。</p>
+
+      <h3>演者名・撮影場所と表示項目</h3>
+      <p>各コマのカメラワークの下に<b>演者名</b>と<b>撮影場所</b>を入力できます。一度入力した内容は<b>候補として表示</b>されるため、同じ演者・同じロケが続く場合は選ぶだけで入力できます（入力欄をクリックすると候補が出ます）。</p>
+      <p>案件によって使わない項目は、上部の<b>「表示項目」</b>からチェックを外すと入力欄が隠れます。設定は<b>絵コンテごと</b>に保存されるので、他の案件には影響しません。チェックを外した項目は<b>PDF・CSVにも出力されません</b>。</p>
+      <p>PDFではカメラワーク欄に 👤演者名・📍撮影場所 が併記され、CSVにはそれぞれ独立した列として書き出されるので、撮影スケジュールの作成にそのまま使えます。</p>
+
+      <h3>変更履歴（前の状態に戻す）</h3>
+      <p>上部の<b>「履歴」</b>から、過去の版に日時を選んで戻せます。編集中は<b>数分ごとに自動で記録</b>され、区切りのよいところで<b>「現在の版を保存」</b>を押せば名前付きで残せます（例: クライアント提出版）。</p>
+      <p>版を選んで「この版に戻す」を押すと、その時点の状態に戻ります。このとき<b>戻す直前の状態も「復元前の状態」として履歴に残る</b>ので、戻しすぎても元に戻せます。</p>
+      <div class="help-note">履歴は最大20版まで保存され、古い版から自動削除されます。画像を含むため容量を使いますので、長期保管したい版は「書き出し → JSON保存」でファイルに残してください。なお <span class="help-kbd">⌘Z</span> は直前の操作を取り消す機能（最大10回）で、履歴とは別物です。</div>
 
       <h3>秒数とタイムコード</h3>
       <p>各コマは<b>秒数だけを入力</b>します（小数可・例: 2.5）。IN-OUTは先頭から自動算出され、並べ替え・追加・削除のたびに全コマ再計算されます。表示形式は <b>mm:ss:ff</b>、フレームレートは既定30fps（24/60切替可、切替時も自動再計算）。合計尺は上部に常時表示され、目標尺（15/30/60または任意）との差分が色で分かります。</p>
@@ -960,6 +1036,8 @@ img{display:block;max-width:100%}
 <input type="file" id="imgFileInput" accept="image/*" class="visually-hidden" aria-hidden="true" tabindex="-1">
 <input type="file" id="refFileInput" accept="image/*" class="visually-hidden" aria-hidden="true" tabindex="-1">
 <input type="file" id="bulkFileInput" accept="image/*" multiple class="visually-hidden" aria-hidden="true" tabindex="-1">
+<datalist id="locationList"></datalist>
+<datalist id="castList"></datalist>
 <div class="toast-area" id="toastArea" aria-live="polite"></div>
 <div id="pdfStage" aria-hidden="true"></div>
 
@@ -972,12 +1050,15 @@ img{display:block;max-width:100%}
    表示形式: mm:ss:ff
    ============================================================ */
 
+/* ---------------- アプリ情報 ---------------- */
+const APP_UPDATED = "2026-10-20";   /* 機能を更新したらこの日付を書き換える */
+
 /* ---------------- state ---------------- */
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
 const newCut = (partial = {}) => ({
   id: uid(), image: null, imageSrc: null, imageTf: null, refImage: null,
-  content: "", dialog: "", telop: "", camera: "", sec: null, prompt: "", ...partial
+  content: "", dialog: "", telop: "", camera: "", location: "", cast: "", sec: null, prompt: "", ...partial
 });
 const newScene = (name, cuts) => ({
   id: uid(), name: name || "", collapsed: false, cuts: cuts || [newCut()]
@@ -987,7 +1068,8 @@ let state = {
   meta: {
     title: "", client: "", author: "", date: new Date().toISOString().slice(0, 10),
     fps: 30, targetSec: 30, naRate: 6, template: "wide",
-    toneRefs: [], imgStyle: "", imgModel: "gemini-3.1-flash-image"
+    toneRefs: [], imgStyle: "", imgModel: "gemini-3.1-flash-image",
+    fields: { cast: true, location: true }   /* 絵コンテごとの表示項目 */
   },
   scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])]
 };
@@ -1153,7 +1235,9 @@ async function loadProject(id) {
   if (!data) return false;
   state = data;
   currentProjectId = id;
-  if (typeof clearHistory === "function") clearHistory(); /* プロジェクト切替で履歴リセット */
+  lastVersionAt = Date.now();   /* 開いた直後に版を作らない */
+  dirtySinceVersion = false;
+  if (typeof clearHistory === "function") clearHistory(); /* プロジェクト切替でUndo履歴リセット */
   if (storageOK) { try { localStorage.setItem(LS_CURRENT, id); } catch (e) {} }
   return true;
 }
@@ -1170,12 +1254,20 @@ function createProjectFromState(newState, opts) {
 let saveTimer = null;
 function scheduleSave() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(persistCurrentProject, 400);
+  saveTimer = setTimeout(() => {
+    persistCurrentProject();
+    if (typeof maybeAutoVersion === "function") maybeAutoVersion();
+  }, 400);
 }
 /* 閉じる直前の取りこぼしを防ぐ */
 window.addEventListener("pagehide", () => { clearTimeout(saveTimer); persistCurrentProject(); });
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") { clearTimeout(saveTimer); persistCurrentProject(); }
+  if (document.visibilityState === "hidden") {
+    clearTimeout(saveTimer);
+    persistCurrentProject();
+    /* 離席前に変更が残っていれば版として残す */
+    if (typeof dirtySinceVersion !== "undefined" && dirtySinceVersion && typeof saveVersion === "function") saveVersion();
+  }
 });
 
 async function tryRestore() {
@@ -1298,6 +1390,180 @@ function evaluateStorageHealth(hadProjects) {
   }
 }
 
+/* ============================================================
+   変更履歴（日時で戻せるバージョン管理）
+   プロジェクトごとに日時つきスナップショットをIndexedDBへ保存。
+   編集中は一定時間ごとに自動記録し、最大20版まで保持する。
+   ============================================================ */
+const MAX_VERSIONS = 20;
+const AUTO_VERSION_INTERVAL = 3 * 60 * 1000;   /* 3分ごと */
+const VER_KEY = (pid) => "ver_" + pid;         /* 版の一覧メタ */
+const VER_BODY = (pid, vid) => "verb_" + pid + "_" + vid;
+let lastVersionAt = 0;
+let dirtySinceVersion = false;
+
+async function readVersions(pid) {
+  const list = await idbGet(VER_KEY(pid || currentProjectId));
+  return Array.isArray(list) ? list : [];
+}
+async function writeVersions(pid, list) {
+  await idbPut(VER_KEY(pid), list).catch(() => {});
+}
+
+/* 版を1つ記録する。name を付けると手動保存扱い。 */
+async function saveVersion(name) {
+  if (!idb || !currentProjectId) return false;
+  const pid = currentProjectId;
+  const body = compactState(state);
+  const json = JSON.stringify(body);
+
+  const list = await readVersions(pid);
+  /* 直前の版と中身が同じならスキップ（無駄な版を作らない） */
+  if (list.length) {
+    const prev = await idbGet(VER_BODY(pid, list[0].id));
+    if (prev && JSON.stringify(prev) === json) {
+      lastVersionAt = Date.now();
+      dirtySinceVersion = false;
+      return false;
+    }
+  }
+
+  const rows = flattenCuts();
+  const entry = {
+    id: uid(),
+    at: new Date().toISOString(),
+    name: name || "",
+    auto: !name,
+    cutCount: rows.length,
+    totalSec: Math.round(totalSeconds() * 10) / 10,
+    title: state.meta.title || "無題プロジェクト"
+  };
+  try {
+    await idbPut(VER_BODY(pid, entry.id), body);
+  } catch (e) {
+    toast("履歴の保存に失敗しました（容量不足の可能性があります）", true);
+    return false;
+  }
+  list.unshift(entry);
+  /* 上限を超えた古い版を削除 */
+  const removed = list.splice(MAX_VERSIONS);
+  for (const r of removed) await idbDel(VER_BODY(pid, r.id));
+  await writeVersions(pid, list);
+
+  lastVersionAt = Date.now();
+  dirtySinceVersion = false;
+  return true;
+}
+
+/* 編集のたびに呼ばれ、一定時間経過していれば自動記録する */
+function maybeAutoVersion() {
+  dirtySinceVersion = true;
+  if (!idb || !currentProjectId) return;
+  if (!lastVersionAt) { lastVersionAt = Date.now(); return; }
+  if (Date.now() - lastVersionAt >= AUTO_VERSION_INTERVAL) saveVersion();
+}
+
+async function restoreVersion(vid) {
+  const pid = currentProjectId;
+  const body = await idbGet(VER_BODY(pid, vid));
+  if (!body || !body.scenes || !body.meta) { toast("この版を読み込めませんでした", true); return; }
+  /* 復元前の状態も版として残す（戻しすぎても元に戻せる） */
+  await saveVersion("復元前の状態");
+  pushHistory();
+  state = JSON.parse(JSON.stringify(body));
+  syncMetaInputs();
+  render();
+  await persistCurrentProject();
+  closeHistModal();
+  toast("選択した版に戻しました（⌘Zでも取り消せます）");
+}
+
+async function deleteVersion(vid) {
+  const pid = currentProjectId;
+  await idbDel(VER_BODY(pid, vid));
+  const list = (await readVersions(pid)).filter(v => v.id !== vid);
+  await writeVersions(pid, list);
+  renderHistList();
+}
+
+/* プロジェクト削除時に版も片付ける */
+async function deleteAllVersions(pid) {
+  const list = await readVersions(pid);
+  for (const v of list) await idbDel(VER_BODY(pid, v.id));
+  await idbDel(VER_KEY(pid));
+}
+
+function fmtWhen(iso) {
+  const d = new Date(iso);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fmtRelative(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "たった今";
+  if (m < 60) return `${m}分前`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}時間前`;
+  const d = Math.floor(h / 24);
+  return `${d}日前`;
+}
+
+async function renderHistList() {
+  const list = document.getElementById("histList");
+  if (!idb) {
+    list.innerHTML = `<div class="hist-empty">この環境では変更履歴を利用できません。<br>「書き出し → JSON保存」でファイルに残してください。</div>`;
+    document.getElementById("histNote").textContent = "";
+    return;
+  }
+  const vers = await readVersions(currentProjectId);
+  document.getElementById("histNote").textContent = `${vers.length} / ${MAX_VERSIONS} 版`;
+  if (!vers.length) {
+    list.innerHTML = `<div class="hist-empty">まだ記録された版はありません。<br>編集を続けると自動で記録されます。</div>`;
+    return;
+  }
+  list.innerHTML = vers.map((v, i) => `
+    <div class="hist-row ${i === 0 ? "current" : ""}" data-ver-id="${v.id}">
+      <span class="h-when">${esc(fmtWhen(v.at))}</span>
+      <span class="h-rel">${esc(fmtRelative(v.at))}</span>
+      ${v.name ? `<span class="h-name">${esc(v.name)}</span>` : `<span class="h-auto">自動</span>`}
+      <span class="h-info">${v.cutCount}コマ / ${v.totalSec}s</span>
+      <button type="button" class="btn" data-vact="restore">この版に戻す</button>
+      <button type="button" class="btn danger" data-vact="del" aria-label="この版を削除">削除</button>
+    </div>`).join("");
+}
+
+function openHistModal() {
+  document.getElementById("histBackdrop").classList.add("open");
+  renderHistList();
+}
+function closeHistModal() { const e=document.getElementById("histBackdrop"); if(e) e.classList.remove("open"); }
+document.getElementById("btnHistory").addEventListener("click", openHistModal);
+document.getElementById("btnHistClose").addEventListener("click", closeHistModal);
+document.getElementById("histBackdrop").addEventListener("click", (e) => { if (e.target.id === "histBackdrop") closeHistModal(); });
+
+document.getElementById("btnSaveVersion").addEventListener("click", async () => {
+  const name = prompt("この版の名前（任意。例: クライアント提出版）", "");
+  if (name === null) return;
+  const ok = await saveVersion(name.trim() || "手動保存");
+  toast(ok ? "現在の版を保存しました" : "前回の版から変更がないため保存しませんでした");
+  renderHistList();
+});
+
+document.getElementById("histList").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-vact]");
+  if (!btn) return;
+  const row = e.target.closest("[data-ver-id]");
+  const vid = row.dataset.verId;
+  if (btn.dataset.vact === "restore") {
+    if (!confirm("この版に戻します。よろしいですか？\n（現在の状態も「復元前の状態」として履歴に残ります）")) return;
+    await restoreVersion(vid);
+  } else if (btn.dataset.vact === "del") {
+    if (!confirm("この版を削除します。元に戻せません。よろしいですか？")) return;
+    await deleteVersion(vid);
+  }
+});
+
 /* 保存状態の表示（容量と直近のエラーを可視化） */
 async function updateStorageNote() {
   const el = $("#storageNote");
@@ -1357,6 +1623,16 @@ function flattenCuts() {
 }
 const totalFrames = () => flattenCuts().reduce((a, r) => a + r.durF, 0);
 const totalSeconds = () => totalFrames() / fps();
+
+/* ---------------- 表示項目（絵コンテごと） ---------------- */
+const OPTIONAL_FIELDS = [
+  { key: "cast", label: "演者名" },
+  { key: "location", label: "撮影場所" }
+];
+function showField(key) {
+  if (!state.meta.fields) state.meta.fields = { cast: true, location: true };
+  return state.meta.fields[key] !== false;
+}
 
 /* ---------------- NA推定 ---------------- */
 function naCharCount(text) {
@@ -1484,8 +1760,24 @@ function render() {
   }).join("");
 
   updateTotals();
+  updateLocationList();
   runChecks();
   scheduleSave();
+}
+
+/* 入力済みの撮影場所・演者名を候補として再利用できるようにする */
+function updateLocationList() {
+  const rows = flattenCuts();
+  [["locationList", "location"], ["castList", "cast"]].forEach(([id, key]) => {
+    const dl = document.getElementById(id);
+    if (!dl) return;
+    const seen = [];
+    rows.forEach(r => {
+      const v = (r.cut[key] || "").trim();
+      if (v && seen.indexOf(v) < 0) seen.push(v);
+    });
+    dl.innerHTML = seen.map(v => `<option value="${esc(v)}"></option>`).join("");
+  });
 }
 
 function renderCut(cut, row) {
@@ -1540,6 +1832,21 @@ function renderCut(cut, row) {
       <div class="field f-camera">
         <label>カメラワーク</label>
         <textarea data-field="camera" placeholder="FIX / PAN / ズームIN 等">${esc(cut.camera)}</textarea>
+        ${(showField("cast") || showField("location")) ? `
+        <div class="shoot-row">
+          ${showField("cast") ? `
+          <div class="shoot-item">
+            <label>演者名</label>
+            <input class="loc-input" type="text" data-field="cast" list="castList"
+              placeholder="山田様 / 社員A" value="${esc(cut.cast || "")}" aria-label="演者名">
+          </div>` : ""}
+          ${showField("location") ? `
+          <div class="shoot-item">
+            <label>撮影場所</label>
+            <input class="loc-input" type="text" data-field="location" list="locationList"
+              placeholder="本社3F 会議室" value="${esc(cut.location || "")}" aria-label="撮影場所">
+          </div>` : ""}
+        </div>` : ""}
       </div>
       <div class="tc-block">
         <span class="sec-input">
@@ -2419,6 +2726,24 @@ $$(".seg [data-tpl]").forEach(btn => btn.addEventListener("click", () => {
   $$(".seg [data-tpl]").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
   render();
 }));
+/* 表示項目メニュー */
+const fieldsMenu = $("#fieldsMenu");
+$("#btnFields").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = fieldsMenu.classList.toggle("open");
+  $("#btnFields").setAttribute("aria-expanded", String(open));
+  syncFieldChecks();
+});
+function syncFieldChecks() {
+  $$("[data-fieldkey]").forEach(cb => { cb.checked = showField(cb.dataset.fieldkey); });
+}
+$$("[data-fieldkey]").forEach(cb => cb.addEventListener("change", () => {
+  pushHistory();
+  if (!state.meta.fields) state.meta.fields = {};
+  state.meta.fields[cb.dataset.fieldkey] = cb.checked;
+  render();
+}));
+
 $("#btnAddScene").addEventListener("click", addScene);
 $("#btnAddCut").addEventListener("click", addCutToLastScene);
 $("#btnUndo").addEventListener("click", undo);
@@ -2435,17 +2760,21 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest(".menu-wrap")) {
     exportMenu.classList.remove("open");
     $("#btnExport").setAttribute("aria-expanded", "false");
+    fieldsMenu.classList.remove("open");
+    $("#btnFields").setAttribute("aria-expanded", "false");
   }
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     exportMenu.classList.remove("open");
+    fieldsMenu.classList.remove("open");
     closeCheckPanel();
     closeAiModal();
     closeProjModal();
     closeHelpModal();
     closeImageEditor();
     closeBulkModal();
+    closeHistModal();
   }
 });
 
@@ -2571,6 +2900,7 @@ async function renameProject(id, name) {
 }
 
 async function deleteProject(id) {
+  await deleteAllVersions(id);
   await idbDel(LS_PROJ(id));
   if (storageOK) { try { localStorage.removeItem(LS_PROJ(id)); } catch (e) {} }
   saveIndex(loadIndex().filter(p => p.id !== id));
@@ -2744,7 +3074,7 @@ $("#btnGenDraft").addEventListener("click", async () => {
     cutCount > 0 ? `コマ数: ${cutCount}コマ程度` : "コマ数: 内容に応じて適切に（目安: 5秒前後/コマ）",
     "",
     "次のJSONスキーマで出力:",
-    '{"scenes":[{"name":"シーン名","cuts":[{"content":"カット内容","dialog":"セリフ・ナレーション","telop":"画面に出すテロップ（不要なら空文字）","camera":"カメラワーク","sec":秒数(数値)}]}]}',
+    '{"scenes":[{"name":"シーン名","cuts":[{"content":"カット内容","dialog":"セリフ・ナレーション","telop":"画面に出すテロップ（不要なら空文字）","camera":"カメラワーク","location":"撮影場所（例: 本社3F 会議室／屋外・公園。不明なら空文字）","sec":秒数(数値)}]}]}',
     "",
     "=== 企画テキスト ===",
     plan
@@ -2761,6 +3091,7 @@ $("#btnGenDraft").addEventListener("click", async () => {
         dialog: String(c.dialog || ""),
         telop: String(c.telop || ""),
         camera: String(c.camera || ""),
+        location: String(c.location || ""),
         sec: (typeof c.sec === "number" && c.sec > 0) ? Math.round(c.sec * 10) / 10 : null
       }))
     )).filter(s => s.cuts.length);
@@ -3235,15 +3566,19 @@ $("#btnCsv").addEventListener("click", () => {
   const rows = flattenCuts();
   if (!rows.length) { toast("コマがありません", true); return; }
   const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-  const header = ["No", "シーン", "カット内容", "セリフ・ナレーション", "テロップ", "カメラワーク",
-    "秒数", "IN(mm:ss:ff)", "OUT(mm:ss:ff)", "INフレーム", "OUTフレーム", "画像生成プロンプト"];
+  const header = ["No", "シーン", "カット内容", "セリフ・ナレーション", "テロップ", "カメラワーク"]
+    .concat(showField("cast") ? ["演者名"] : [])
+    .concat(showField("location") ? ["撮影場所"] : [])
+    .concat(["秒数", "IN(mm:ss:ff)", "OUT(mm:ss:ff)", "INフレーム", "OUTフレーム", "画像生成プロンプト"]);
   const lines = [header.map(q).join(",")];
   rows.forEach(r => {
-    lines.push([
-      r.no, r.scene.name, r.cut.content, r.cut.dialog, r.cut.telop || "", r.cut.camera,
-      r.cut.sec != null ? r.cut.sec : "",
-      framesToTC(r.inF), framesToTC(r.outF), r.inF, r.outF, r.cut.prompt
-    ].map(q).join(","));
+    lines.push([r.no, r.scene.name, r.cut.content, r.cut.dialog, r.cut.telop || "", r.cut.camera]
+      .concat(showField("cast") ? [r.cut.cast || ""] : [])
+      .concat(showField("location") ? [r.cut.location || ""] : [])
+      .concat([
+        r.cut.sec != null ? r.cut.sec : "",
+        framesToTC(r.inF), framesToTC(r.outF), r.inF, r.outF, r.cut.prompt
+      ]).map(q).join(","));
   });
   /* メタ情報行（末尾コメント行） */
   lines.push("");
@@ -3253,6 +3588,18 @@ $("#btnCsv").addEventListener("click", () => {
   downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), fileBase() + "_vcon.csv");
   toast("Vコン用CSVを書き出しました（UTF-8 BOM）");
 });
+
+/* PDFのカメラワーク欄ラベル・併記内容（非表示項目は出力しない） */
+function pdfShootLabel() {
+  const extra = OPTIONAL_FIELDS.filter(f => showField(f.key)).map(f => f.label);
+  return "カメラワーク" + (extra.length ? "／" + extra.join("・") : "");
+}
+function pdfShootExtra(cut) {
+  const parts = [];
+  if (showField("cast") && cut.cast) parts.push(`👤${esc(cut.cast)}`);
+  if (showField("location") && cut.location) parts.push(`📍${esc(cut.location)}`);
+  return parts.length ? `　<span style="color:#0f4c81">${parts.join("　")}</span>` : "";
+}
 
 /* ---- PDF 書き出し（A4縦・絵コンテ用紙） ---- */
 const PDF_CUTS_PER_PAGE = 4;
@@ -3307,7 +3654,7 @@ $("#btnPdf").addEventListener("click", async () => {
             <div class="pdf-field"><div class="pf-label">カット内容</div><div class="pf-value">${esc(r.cut.content)}</div></div>
             <div class="pdf-field"><div class="pf-label">セリフ・ナレーション</div><div class="pf-value">${esc(r.cut.dialog)}</div></div>
             <div class="pdf-field"><div class="pf-label">テロップ</div><div class="pf-value">${esc(r.cut.telop || "")}</div></div>
-            <div class="pdf-field"><div class="pf-label">カメラワーク</div><div class="pf-value">${esc(r.cut.camera)}</div></div>
+            <div class="pdf-field"><div class="pf-label">${pdfShootLabel()}</div><div class="pf-value">${esc(r.cut.camera)}${pdfShootExtra(r.cut)}</div></div>
           </div>
           <div class="pdf-cut-tc">
             <div class="tc-item"><div class="l">SEC</div><div class="v">${r.cut.sec != null ? r.cut.sec + "s" : "—"}</div></div>
@@ -3347,6 +3694,8 @@ function syncMetaInputs() {
   $("#fpsSelect").value = String(state.meta.fps);
   $("#naRate").value = state.meta.naRate;
   $$(".seg [data-tpl]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tpl === state.meta.template)));
+  if (!state.meta.fields) state.meta.fields = { cast: true, location: true };
+  syncFieldChecks();
   if (!state.meta.toneRefs) state.meta.toneRefs = [];
   if (!state.meta.imgModel) state.meta.imgModel = "gemini-3.1-flash-image";
   $("#imgStyle").value = state.meta.imgStyle || defaultImgStyle();
@@ -3356,6 +3705,7 @@ function syncMetaInputs() {
 }
 
 (async function init() {
+  $("#appVer").textContent = `（更新 ${APP_UPDATED}）`;
   syncMetaInputs();
   render();                       /* まず初期画面を出す（DB接続を待たせない） */
   $("#storageNote").textContent = "保存データを読み込んでいます…";
