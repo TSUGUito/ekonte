@@ -147,14 +147,15 @@ img{display:block;max-width:100%}
 .sched-field input{border:1px solid var(--line-strong);border-radius:3px;padding:4px 7px;font-family:var(--font-mono)}
 .sched-summary{margin-left:auto;font-size:var(--fs-sm);font-family:var(--font-mono);color:var(--ink-2)}
 
-.sched-table{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);overflow:hidden}
+.sched-table{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius)}
 .sched-hdr,.sched-row{
   display:grid;align-items:start;gap:8px;padding:7px 10px;
   grid-template-columns:24px 96px 70px minmax(0,1.4fr) 92px minmax(0,1fr) minmax(0,1.2fr) 62px minmax(0,1fr) 28px;
 }
 .sched-hdr{
   background:var(--ink);color:#fff;font-size:var(--fs-xs);letter-spacing:.08em;
-  position:sticky;top:var(--topbar-h);z-index:10;align-items:center;
+  position:sticky;top:var(--topbar-h);z-index:30;align-items:center;
+  border-radius:var(--radius) var(--radius) 0 0;
 }
 .sched-row{border-top:1px solid var(--line);font-size:var(--fs-sm)}
 .sched-row:hover{background:var(--surface-dim)}
@@ -184,11 +185,23 @@ img{display:block;max-width:100%}
 }
 .sched-empty{padding:36px 16px;text-align:center;color:var(--ink-3);font-size:var(--fs-sm);line-height:1.9}
 .sched-drop{height:0;border-top:3px solid var(--accent);margin:0}
+/* 狭い画面では1行を縦積みにする（横に潰れて読めなくなるのを防ぐ） */
 @media (max-width:1100px){
   .sched-hdr{display:none}
-  .sched-row{grid-template-columns:24px 96px minmax(0,1fr) 62px 28px;row-gap:6px}
-  .sched-row .sr-type{grid-column:3/5}
-  .sched-row .sr-cuts,.sched-row .sr-cast,.sched-row .sr-equip,.sched-row .sr-note{grid-column:2/6}
+  .sched-row{grid-template-columns:24px minmax(0,1fr) 28px;row-gap:5px;padding:10px}
+  .sched-row .sched-time{grid-column:2/3;grid-row:1}
+  .sched-row .sr-del{grid-column:3/4;grid-row:1;justify-self:end}
+  .sched-row .sr-type,.sched-row .sr-label,.sched-row .sr-cuts,
+  .sched-row .sr-cast,.sched-row .sr-equip,.sched-row .sr-min,
+  .sched-row .sr-note{grid-column:2/4}
+  .sched-row .sr-min{display:flex;align-items:center;gap:6px}
+  .sched-row .sr-min::before{content:"所要(分)";font-size:var(--fs-xs);color:var(--ink-3)}
+  .sched-row .sr-min input{max-width:84px}
+  .sched-row .sr-cuts::before{content:"カット ";color:var(--ink-3)}
+  .sched-row .sr-cast::before{content:"演者 ";font-size:var(--fs-xs);color:var(--ink-3);margin-right:4px}
+  .sched-row .sr-equip::before{content:"機材 ";font-size:var(--fs-xs);color:var(--ink-3);margin-right:4px}
+  .sched-row .sched-time{display:flex;align-items:baseline;gap:6px}
+  .sched-row .sched-time small{display:inline}
 }
 
 /* ============ 保存に関する警告バナー ============ */
@@ -469,7 +482,6 @@ img{display:block;max-width:100%}
   .board.tpl-wide .cut-main .f-camera{grid-column:2/5}
 }
 @media (max-width:680px){
-  :root{--topbar-h:auto}
   .board.tpl-wide .cut-main,.board.tpl-quad .cuts{grid-template-columns:1fr}
   .board.tpl-wide .cut-main .f-content,.board.tpl-wide .cut-main .f-dialog,
   .board.tpl-wide .cut-main .f-telop,.board.tpl-wide .cut-main .f-camera{grid-column:auto}
@@ -4306,19 +4318,20 @@ function renderSchedule() {
       <span class="sr-handle" title="ドラッグで並べ替え">⠿</span>
       <span class="sched-time">${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small></span>
       <span class="sr-type">
-        <select data-srow="type">
+        <select data-srow="type" aria-label="区分">
           <option value="shoot" ${r.type === "shoot" ? "selected" : ""}>撮影</option>
           <option value="other" ${r.type === "other" ? "selected" : ""}>その他</option>
         </select>
       </span>
-      <span><input type="text" data-srow="label" value="${esc(r.label)}" placeholder="${r.type === "other" ? "移動 / 休憩 / セッティング" : "場所・内容"}">${
+      <span class="sr-label"><input type="text" data-srow="label" value="${esc(r.label)}" aria-label="内容・場所"
+        placeholder="${r.type === "other" ? "移動 / 休憩 / セッティング" : "場所・内容"}">${
         r.stale ? `<span class="stale-badge">絵コンテから削除済</span>` : ""}</span>
       <span class="sr-cuts">${r.cutNos && r.cutNos.length ? "#" + esc(compactNos(r.cutNos)) : "—"}</span>
       <span class="sr-cast sr-tags">${(r.cast || []).length ? (r.cast || []).map(v => `<span class="tag">${esc(v)}</span>`).join("") : "—"}</span>
       <span class="sr-equip sr-tags">${(r.equipment || []).length ? (r.equipment || []).map(v => `<span class="tag eq">${esc(v)}</span>`).join("") : "—"}</span>
-      <span><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}" aria-label="所要時間（分）"></span>
+      <span class="sr-min"><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}" aria-label="所要時間（分）"></span>
       <span class="sr-note"><textarea data-srow="note" rows="1" placeholder="当日メモ">${esc(r.note || "")}</textarea></span>
-      <span><button type="button" class="icon-btn del" data-srow-act="del" aria-label="この行を削除">✕</button></span>
+      <span class="sr-del"><button type="button" class="icon-btn del" data-srow-act="del" aria-label="この行を削除">✕</button></span>
     </div>`).join("");
 }
 
@@ -4679,8 +4692,24 @@ function syncMetaInputs() {
   renderToneRefs();
 }
 
+/* 上部バーの実際の高さを --topbar-h に反映する。
+   ボタンが増えてバーが折り返すと高さが変わるため、固定値だと
+   香盤表の見出し（position:sticky）が行に重なってしまう。 */
+function syncTopbarHeight() {
+  const bar = document.querySelector(".topbar");
+  if (!bar) return;
+  const h = Math.round(bar.getBoundingClientRect().height);
+  if (h > 0) document.documentElement.style.setProperty("--topbar-h", h + "px");
+}
+window.addEventListener("resize", syncTopbarHeight);
+window.addEventListener("load", syncTopbarHeight);
+if (window.ResizeObserver) {
+  try { new ResizeObserver(syncTopbarHeight).observe(document.querySelector(".topbar")); } catch (e) {}
+}
+
 (async function init() {
   $("#appVer").textContent = `（更新 ${APP_UPDATED}）`;
+  syncTopbarHeight();
   syncMetaInputs();
   render();                       /* まず初期画面を出す（DB接続を待たせない） */
   $("#storageNote").textContent = "保存データを読み込んでいます…";
