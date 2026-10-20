@@ -948,6 +948,7 @@ body.share-mode .warn-banner{display:none!important}
   height:28px;min-width:62px;padding:0 12px;font-size:16px;line-height:1;
   box-sizing:border-box;flex:0 0 auto;
 }
+.pdf-sched .ps-main .ps-day-img{display:block;flex:0 0 auto}
 .pdf-sched .ps-meta{font-size:12.5px;color:#4b5563;margin-top:4px}
 .pdf-sched .ps-setup{font-size:11.5px;color:#0f4c81;margin-top:3px;font-weight:600}
 .pdf-sched .ps-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -1290,6 +1291,23 @@ body.share-mode .warn-banner{display:none!important}
 </div>
 
 <!-- ============ 共有手順モーダル ============ -->
+<div class="modal-backdrop" id="pdfPreviewBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pdfPreviewTitle" style="max-width:860px;width:100%">
+    <div class="modal-head">
+      <h2 id="pdfPreviewTitle">PDFプレビュー</h2>
+      <button type="button" class="icon-btn" id="btnPdfPreviewClose" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="pdfPreviewNote" style="margin-bottom:8px;font-size:13px"></p>
+      <div id="pdfPreviewBody" style="display:flex;flex-direction:column;gap:14px;background:#e8ebee;padding:12px;max-height:68vh;overflow:auto"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button type="button" class="btn" id="btnPdfPreviewCancel">閉じる</button>
+        <button type="button" class="btn primary" id="btnPdfPreviewSave">PDFを保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+<style>#pdfPreviewBody figure{margin:0}#pdfPreviewBody img{width:100%;display:block;box-shadow:0 1px 6px rgba(0,0,0,.3);background:#fff}#pdfPreviewBody figcaption{font-size:11px;text-align:center;color:#555;margin-top:4px}</style>
 <div class="modal-backdrop" id="shareHelpBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="shareHelpTitle">
     <div class="modal-head">
@@ -5453,6 +5471,27 @@ const SCHED_ROWS_PER_PAGE = 11;
 /* A4のピクセル寸法（96dpi相当）。向きで入れ替える */
 const A4 = { portrait: { w: 794, h: 1123, mm: [210, 297] }, landscape: { w: 1123, h: 794, mm: [297, 210] } };
 
+/* DAYバッジはcanvasで描いた画像にする（html2canvasの文字位置ずれを避けるため） */
+function dayBadgeImg(text, land) {
+  const h = land ? 28 : 25, fs = land ? 16 : 14, padX = land ? 12 : 10, minW = land ? 62 : 54, k = 4;
+  const font = "700 " + fs + "px " + (getComputedStyle(document.body).fontFamily || "sans-serif");
+  const m = document.createElement("canvas").getContext("2d");
+  m.font = font;
+  const w = Math.max(minW, Math.ceil(m.measureText(text).width) + padX * 2);
+  const c = document.createElement("canvas");
+  c.width = w * k; c.height = h * k;
+  const g = c.getContext("2d");
+  g.scale(k, k);
+  g.fillStyle = "#0f4c81";
+  g.beginPath();
+  if (g.roundRect) g.roundRect(0, 0, w, h, 4); else g.rect(0, 0, w, h);
+  g.fill();
+  g.fillStyle = "#ffffff"; g.font = font;
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.fillText(text, w / 2, h / 2 + 0.5);
+  return `<img class="ps-day-img" alt="${esc(text)}" src="${c.toDataURL("image/png")}" style="width:${w}px;height:${h}px">`;
+}
+
 function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
   const s = schedule();
   const o = opt || {};
@@ -5461,7 +5500,7 @@ function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
   <div class="pdf-sched ${o.orient === "landscape" ? "ps-land" : "ps-port"} ${o.fit ? "ps-fit" : ""}"
        style="width:${page.w}px;${o.fit ? "" : `height:${page.h}px;`}">
     <div class="ps-title">
-      <div class="ps-main"><span>香盤表 — ${esc(state.meta.title || "無題プロジェクト")}</span><span class="ps-day">${esc(day.name)}</span></div>
+      <div class="ps-main"><span>香盤表 — ${esc(state.meta.title || "無題プロジェクト")}</span>${dayBadgeImg(day.name, o.orient === "landscape")}</div>
       <div class="ps-meta">${esc(day.date || "日付未設定")} ／ ${fmtHM(info.start)}〜${fmtHM(info.end)} ／ 所要 ${fmtMin(info.minutes)} ／ 終業 ${esc(day.endTime)} ／ 予備枠 ${info.spareMin >= 0 ? fmtMin(info.spareMin) : "−" + fmtMin(-info.spareMin) + "（超過）"}${day.memo ? " ／ " + esc(day.memo) : ""}</div>
       ${s.setup ? `<div class="ps-setup">撮影設定：${esc(s.setup)}</div>` : ""}
     </div>
@@ -5587,6 +5626,29 @@ $("#btnCopyShareUrl").addEventListener("click", () => {
   copyText($("#shareUrl").value).then(() => toast("共有URLをコピーしました"));
 });
 
+let pdfPreviewDoc = null, pdfPreviewName = "";
+function openPdfPreview(doc, name, imgs, note) {
+  pdfPreviewDoc = doc; pdfPreviewName = name;
+  document.getElementById("pdfPreviewNote").textContent = note;
+  document.getElementById("pdfPreviewBody").innerHTML = imgs.map((u, i) =>
+    `<figure><img src="${u}" alt="${i + 1}ページ目"><figcaption>${i + 1} / ${imgs.length}</figcaption></figure>`).join("");
+  document.getElementById("pdfPreviewBackdrop").classList.add("open");
+}
+function closePdfPreview() {
+  document.getElementById("pdfPreviewBackdrop").classList.remove("open");
+  document.getElementById("pdfPreviewBody").innerHTML = "";
+  pdfPreviewDoc = null;
+}
+document.getElementById("pdfPreviewBackdrop").addEventListener("click", (e) => { if (e.target.id === "pdfPreviewBackdrop") closePdfPreview(); });
+document.getElementById("btnPdfPreviewClose").addEventListener("click", closePdfPreview);
+document.getElementById("btnPdfPreviewCancel").addEventListener("click", closePdfPreview);
+document.getElementById("btnPdfPreviewSave").addEventListener("click", () => {
+  if (!pdfPreviewDoc) return;
+  pdfPreviewDoc.save(pdfPreviewName);
+  toast("香盤表PDFを保存しました");
+  closePdfPreview();
+});
+
 function pdfOptions() {
   const o = (document.querySelector('input[name="pdfOrient"]:checked') || {}).value || "portrait";
   const f = (document.querySelector('input[name="pdfFit"]:checked') || {}).value || "fit";
@@ -5615,7 +5677,7 @@ async function exportSchedPdf(mode) {
 
   const btn = $(mode === "day" ? "#btnSchedPdfDay" : "#btnSchedPdfAll");
   btn.disabled = true;
-  toast("PDFを生成しています…");
+  toast("プレビューを生成しています…");
   try {
     const stage = $("#pdfStage");
     stage.style.width = page.w + "px";
@@ -5631,12 +5693,14 @@ async function exportSchedPdf(mode) {
     const doc = new jsPDF({ orientation: opt.orient, unit: "mm", format: "a4" });
     const [mmW, mmH] = page.mm;
     let shrunk = false;
+    const previews = [];
 
     for (let p = 0; p < pages.length; p++) {
       stage.innerHTML = schedPdfPageHTML(pages[p].day, pages[p].rows, p + 1, pages.length, info[pages[p].day.id], opt);
       const el = $(".pdf-sched", stage);
       const canvas = await window.html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
       if (p > 0) doc.addPage();
+      previews.push(canvas.toDataURL("image/jpeg", 0.85));
       if (opt.fit) {
         /* 内容の高さが用紙を超えたら、用紙内に収まるよう縮小する */
         const ratio = canvas.height / canvas.width;      /* 実際の縦横比 */
@@ -5650,9 +5714,9 @@ async function exportSchedPdf(mode) {
     stage.innerHTML = "";
     stage.style.width = "";
     const suffix = mode === "day" ? "_香盤表_" + days[0].name : "_香盤表_全日程";
-    doc.save(fileBase() + suffix + ".pdf");
-    toast(`香盤表PDFを書き出しました（${opt.orient === "portrait" ? "A4縦" : "A4横"} / ${pages.length}ページ）` +
-      (shrunk ? "　※1ページに収めるため縮小しました" : ""));
+    openPdfPreview(doc, fileBase() + suffix + ".pdf", previews,
+      `${opt.orient === "portrait" ? "A4縦" : "A4横"} / ${pages.length}ページ` + (shrunk ? " ／ 1ページに収めるため縮小しています" : ""));
+    toast("プレビューを表示しました。内容を確認して「PDFを保存」を押してください");
   } catch (e) {
     toast("PDF生成に失敗: " + e.message, true);
   } finally {
