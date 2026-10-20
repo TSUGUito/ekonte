@@ -4473,10 +4473,15 @@ $("#btnSchedGen").addEventListener("click", () => {
   toast(msg.length ? msg.join(" / ") + "（入力済みの時刻・備考は保持しました）" : "変更はありませんでした");
 });
 
-/* 画面切替 */
+/* 画面切替（リロードしても最後に見ていた画面を保つ） */
+const LS_VIEW = "tsugu_sb_view";
 let currentView = "board";
-function setView(v) {
+function setView(v, opts) {
+  if (v !== "board" && v !== "sched") v = "board";
   currentView = v;
+  if (!(opts && opts.silent) && storageOK) {
+    try { localStorage.setItem(LS_VIEW, v); } catch (e) {}
+  }
   $$(".view-seg [data-view]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
   $(".board-wrap").hidden = v !== "board";
   $("#schedWrap").hidden = v !== "sched";
@@ -4736,6 +4741,12 @@ if (window.ResizeObserver) {
 
   syncMetaInputs();
   render();
+
+  /* 前回見ていた画面（絵コンテ / 香盤表）に戻す */
+  let lastView = "board";
+  if (storageOK) { try { lastView = localStorage.getItem(LS_VIEW) || "board"; } catch (e) {} }
+  setView(lastView, { silent: true });
+
   await updateStorageNote();
   evaluateStorageHealth(restored);
   if (restored) toast("前回のプロジェクトを復元しました");
