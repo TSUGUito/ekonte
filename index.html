@@ -252,6 +252,8 @@ img{display:block;max-width:100%}
   width:100%;min-width:0;background:var(--surface-dim);font-family:inherit;
 }
 .sched-row textarea{resize:vertical;min-height:30px;line-height:1.5}
+/* 内容・メモは全文が見えるよう高さを内容に合わせて自動で伸ばす */
+.sched-row textarea.sr-grow{resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word}
 .sched-row input:focus,.sched-row textarea:focus,.sched-row select:focus{border-color:var(--accent);background:#fff}
 .sched-row input.min-input{font-family:var(--font-mono);text-align:right}
 .sched-row .sr-cuts{font-family:var(--font-mono);font-size:var(--fs-xs);color:var(--ink-2);padding-top:5px;word-break:break-all}
@@ -4959,8 +4961,8 @@ function schedRowHTML(r) {
           <option value="other" ${r.type === "other" ? "selected" : ""}>その他</option>
         </select>
       </span>
-      <span class="sr-label"><input type="text" data-srow="label" value="${esc(r.label)}" aria-label="内容・場所"
-        placeholder="${r.type === "other" ? "移動 / 休憩 / セッティング" : "場所・内容"}">${
+      <span class="sr-label"><textarea class="sr-grow" data-srow="label" rows="1" aria-label="内容・場所"
+        placeholder="${r.type === "other" ? "移動 / 休憩 / セッティング" : "場所・内容"}">${esc(r.label)}</textarea>${
         r.stale ? `<span class="stale-badge">絵コンテから削除済</span>` : ""}${
         locationWindow(r.label) ? `<span class="win-badge">窓 ${esc(locationWindow(r.label))}</span>` : ""}</span>
       <span class="sr-cuts sr-shot">
@@ -4971,7 +4973,7 @@ function schedRowHTML(r) {
       <span class="sr-cast sr-tags">${(r.cast || []).length ? (r.cast || []).map(v => `<span class="tag">${esc(v)}</span>`).join("") : "—"}</span>
       <span class="sr-equip sr-tags">${(r.equipment || []).length ? (r.equipment || []).map(v => `<span class="tag eq">${esc(v)}</span>`).join("") : "—"}</span>
       <span class="sr-min"><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}" aria-label="所要時間（分）"></span>
-      <span class="sr-note"><textarea data-srow="note" rows="1" placeholder="当日メモ">${esc(r.note || "")}</textarea></span>
+      <span class="sr-note"><textarea class="sr-grow" data-srow="note" rows="1" placeholder="当日メモ">${esc(r.note || "")}</textarea></span>
       <span class="sr-del"><button type="button" class="icon-btn del" data-srow-act="del" aria-label="この行を削除">✕</button></span>
     </div>`;
 }
@@ -4987,7 +4989,23 @@ function daySepHTML(d, info) {
 }
 const fmtMin = (m) => `${Math.floor(m / 60)}時間${m % 60}分`;
 
+/* テキスト欄の高さを内容に合わせる（全文表示） */
+function growTA(el) {
+  if (!el || !el.offsetParent) return;   /* 非表示中は測れないので表示時に再計算 */
+  el.style.height = "auto";
+  el.style.height = (el.scrollHeight + 2) + "px";
+}
+function growAllSchedTA() {
+  document.querySelectorAll("#schedTable textarea.sr-grow").forEach(growTA);
+}
+let growTimer = null;
+window.addEventListener("resize", () => { clearTimeout(growTimer); growTimer = setTimeout(growAllSchedTA, 120); });
+
 function renderSchedule() {
+  renderScheduleBody();
+  growAllSchedTA();
+}
+function renderScheduleBody() {
   const s = schedule();
   const info = computeSchedTimes();
   const tbl = $("#schedTable");
@@ -5222,10 +5240,15 @@ function parseNoList(str, max) {
   return out.sort((a, b) => a - b);
 }
 
+/* 内容・場所は1項目扱いなのでEnterで改行させない（折り返し表示のみ） */
+$("#schedTable").addEventListener("keydown", (e) => {
+  if (e.target.dataset && e.target.dataset.srow === "label" && e.key === "Enter" && !e.isComposing) e.preventDefault();
+});
 /* 入力（フォーカスを保つため時刻だけ更新） */
 $("#schedTable").addEventListener("input", (e) => {
   const key = e.target.dataset.srow;
   if (!key) return;
+  if (e.target.classList.contains("sr-grow")) growTA(e.target);
   const rowEl = e.target.closest("[data-row-id]");
   const r = schedule().rows.find(x => x.id === rowEl.dataset.rowId);
   if (!r) return;
