@@ -231,7 +231,7 @@ img{display:block;max-width:100%}
 .sched-table{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius)}
 .sched-hdr,.sched-row{
   display:grid;align-items:start;gap:8px;padding:7px 10px;
-  grid-template-columns:24px 96px 74px minmax(0,1.3fr) minmax(0,.9fr) 92px minmax(0,1fr) minmax(0,1.1fr) 62px minmax(0,1fr) 28px;
+  grid-template-columns:24px 96px 74px minmax(0,1.6fr) minmax(0,1fr) 92px minmax(0,.9fr) minmax(0,1fr) 62px 28px;
 }
 .sched-hdr{
   background:var(--ink);color:#fff;font-size:var(--fs-xs);letter-spacing:.08em;
@@ -252,12 +252,17 @@ img{display:block;max-width:100%}
 /* 行の下段（内訳・機材チェック・当日記録） */
 .sched-row .sr-extra{grid-column:3/-1;display:flex;flex-direction:column;gap:6px}
 .sched-row .sr-extra:empty{display:none}
+.sched-row .sx-bd .bd-item{max-width:100%}
 .sx-box{border:1px dashed var(--line-strong);border-radius:4px;padding:6px 8px;background:rgba(255,255,255,.7);font-size:var(--fs-xs)}
 .sx-box .sx-title{font-weight:700;color:var(--ink-2);margin-right:6px}
 .sx-bd{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .sx-bd .bd-item{display:inline-flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
 .sched-row .sx-bd .bd-item input{width:auto;padding:2px 4px;font-size:var(--fs-xs)}
-.sched-row .sx-bd .bd-item input.bd-label{width:110px}
+.sched-row .sx-bd .bd-item input.bd-label{max-width:100%}
+/* 備考は行の下段に全幅で置く（長文でも読みやすく） */
+.sx-note{display:flex;align-items:flex-start;gap:8px}
+.sx-note .sx-title{font-size:var(--fs-xs);font-weight:700;color:var(--ink-2);padding-top:6px;white-space:nowrap;min-width:3.5em}
+.sched-row .sx-note textarea{flex:1;min-height:30px;line-height:1.6}
 .sched-row .sx-bd .bd-item input.bd-min{width:52px;text-align:right;font-family:var(--font-mono)}
 .sx-bd .bd-del{border:none;background:none;color:var(--ink-3);cursor:pointer;font-size:13px;padding:0 2px}
 .sx-bd .bd-sum{font-family:var(--font-mono);color:var(--ink-2)}
@@ -1491,7 +1496,7 @@ body.share-mode .warn-banner{display:none!important}
       <p><b>絵コンテの各カットに撮影日を割り当てて</b>おくと（コマの「撮影日」欄／上部「表示項目」で表示切替）、<b>「絵コンテから取り込み」</b>で各日の行へ自動で振り分けられます。手で足した行にも「カット選択」ボタンからカット番号を割り当てられ、演者・機材が自動で入ります。</p>
       <p><b>横・縦の撮影済みチェック</b>は各行のカット番号ごとに「☐横 ☐縦」が並びます。その場でチェックすると、日別・全体の残り件数が画面上部に出ます。<b>縦の撮り忘れ</b>はチェック機能でも警告されます。</p>
       <p><b>「出演者の拘束時間」</b>ボタンで、演者ごとの集合・解散・拘束時間を日別に自動集計します（テキストでコピー可）。<b>撮影設定</b>欄に機材やカメラ設定を書いておくと、香盤表PDFの見出しに印字されます。</p>
-      <p><b>開始時刻と各行の所要時間を入れると、以降の時刻が自動で積み上がります。</b>行を並べ替えたり所要時間を変えると、全体の時刻がその場で再計算されます。「＋行を追加」で準備・移動・休憩などの行も挟めます。備考欄は当日のメモにお使いください。</p>
+      <p><b>開始時刻と各行の所要時間を入れると、以降の時刻が自動で積み上がります。</b>行を並べ替えたり所要時間を変えると、全体の時刻がその場で再計算されます。「＋行を追加」で準備・移動・休憩などの行も挟めます。<b>備考</b>は各行の下段に横幅いっぱいで表示されるので、長文の段取りや注意点も読みやすく書けます。</p>
       <p><b>区分</b>は「撮影／準備／移動／休憩／撤収／その他」から選べ、区分ごとに色分けされます。<b>撮影とその他以外ではカット選択は表示されません</b>（カットを割り当てない行のため）。<b>撮影場所</b>は専用の欄があり、取り込み時や「カット選択」で<b>カットの撮影場所が自動で入ります</b>。手で直した場合はその内容を優先し、空にすると自動入力に戻ります。</p>
       <p><b>所要時間の内訳</b>：所要時間の下の「＋内訳」で、セッティング・撮影・撤収などの内訳を別枠で入れられます。<b>内訳の合計がそのまま所要時間になります</b>（PDF・CSV・共有ページにも出ます）。<b>準備</b>の行には<b>機材チェック</b>が出ます（その日の撮影で使う機材。未設定なら登録機材すべて）。</p>
       <p><b>当日の進行記録</b>：上部の「当日の進行を記録」をオンにすると、各行に実際の開始・終了時刻の欄が出ます（「今」で現在時刻を入力）。<b>予定との遅れ／巻き</b>が行と日の見出しに表示されます。</p>
@@ -5044,7 +5049,7 @@ try { schedLive = localStorage.getItem("tsugu_sb_live") === "1"; } catch (e) {}
 function schedHdrHTML() {
   return `<div class="sched-hdr">
       <span></span><span>時刻</span><span>区分</span><span>内容</span><span>撮影場所</span>
-      <span>カット / 横縦</span><span>演者</span><span>機材</span><span>所要(分)</span><span>備考</span><span></span>
+      <span>カット / 横縦</span><span>演者</span><span>機材</span><span>所要(分)</span><span></span>
     </div>`;
 }
 
@@ -5093,19 +5098,24 @@ function schedRowHTML(r) {
       <span class="sr-min"><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}"
         aria-label="所要時間（分）" ${hasBd ? `readonly title="内訳の合計です。内訳で調整してください"` : ""}>${
         hasBd ? "" : `<button type="button" class="mini-btn" data-srow-act="bdAdd" title="所要時間の内訳を入れる">＋内訳</button>`}</span>
-      <span class="sr-note"><textarea class="sr-grow" data-srow="note" rows="1" placeholder="当日メモ">${esc(r.note || "")}</textarea></span>
       <span class="sr-del"><button type="button" class="icon-btn del" data-srow-act="del" aria-label="この行を削除">✕</button></span>
-      <div class="sr-extra">${bdHTML(r)}${r.type === "prep" ? eqCheckHTML(r) : ""}${schedLive ? liveHTML(r) : ""}</div>
+      <div class="sr-extra">
+        <label class="sx-note"><span class="sx-title">備考</span><textarea class="sr-grow" data-srow="note" rows="1" placeholder="当日メモ・段取り・注意点など（長文OK）">${esc(r.note || "")}</textarea></label>${bdHTML(r)}${r.type === "prep" ? eqCheckHTML(r) : ""}${schedLive ? liveHTML(r) : ""}</div>
     </div>`;
 }
 
+/* 内訳の項目欄の幅（全角1文字≒1em。短すぎ・長すぎを防ぐ） */
+function bdLabelW(t) {
+  const n = [...String(t || "")].reduce((a, ch) => a + (/[ -~]/.test(ch) ? 0.55 : 1), 0);
+  return Math.min(24, Math.max(6, Math.ceil(n) + 2.5));
+}
 /* 所要時間の内訳（合計が所要時間になる） */
 function bdHTML(r) {
   const list = r.breakdown || [];
   if (!list.length) return "";
   return `<div class="sx-box sx-bd"><span class="sx-title">所要時間の内訳</span>${list.map(b => `
     <span class="bd-item" data-bd-id="${b.id}">
-      <input type="text" class="bd-label" data-bd="label" value="${esc(b.label || "")}" placeholder="項目" list="bdPresets" aria-label="内訳の項目">
+      <input type="text" class="bd-label" data-bd="label" value="${esc(b.label || "")}" style="width:${bdLabelW(b.label)}em" placeholder="項目" list="bdPresets" aria-label="内訳の項目">
       <input type="number" class="bd-min" data-bd="min" min="0" step="5" value="${Number(b.min) || 0}" aria-label="分">分
       <button type="button" class="bd-del" data-srow-act="bdDel" data-bd-id="${b.id}" aria-label="この内訳を削除">✕</button>
     </span>`).join("")}
@@ -5461,6 +5471,7 @@ $("#schedTable").addEventListener("input", (e) => {
     refreshSchedTimes();
   } else {
     item.label = e.target.value;
+    e.target.style.width = bdLabelW(item.label) + "em";
     scheduleSave();
   }
 });
