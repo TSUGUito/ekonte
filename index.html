@@ -308,24 +308,79 @@ img{display:block;max-width:100%}
 .sched-empty{padding:36px 16px;text-align:center;color:var(--ink-3);font-size:var(--fs-sm);line-height:1.9}
 .sched-drop{height:0;border-top:3px solid var(--accent);margin:0}
 /* 狭い画面では1行を縦積みにする（横に潰れて読めなくなるのを防ぐ） */
-@media (max-width:1100px){
-  .sched-hdr{display:none}
-  .sched-row{grid-template-columns:24px minmax(0,1fr) 28px;row-gap:5px;padding:10px}
-  .sched-row .sched-time{grid-column:2/3;grid-row:1}
-  .sched-row .sr-del{grid-column:3/4;grid-row:1;justify-self:end}
-  .sched-row .sr-type,.sched-row .sr-label,.sched-row .sr-loc,.sched-row .sr-cuts,
-  .sched-row .sr-cast,.sched-row .sr-equip,.sched-row .sr-min,
-  .sched-row .sr-note,.sched-row .sr-extra{grid-column:2/4}
-  .sched-row .sr-loc{display:flex;align-items:center;gap:6px}
-  .sched-row .sr-loc::before{content:"撮影場所";font-size:var(--fs-xs);color:var(--ink-3);white-space:nowrap}
-  .sched-row .sr-min{display:flex;align-items:center;gap:6px}
-  .sched-row .sr-min::before{content:"所要(分)";font-size:var(--fs-xs);color:var(--ink-3)}
-  .sched-row .sr-min input{max-width:84px}
-  .sched-row .sr-cuts::before{content:"カット ";color:var(--ink-3)}
-  .sched-row .sr-cast::before{content:"演者 ";font-size:var(--fs-xs);color:var(--ink-3);margin-right:4px}
-  .sched-row .sr-equip::before{content:"機材 ";font-size:var(--fs-xs);color:var(--ink-3);margin-right:4px}
-  .sched-row .sched-time{display:flex;align-items:baseline;gap:6px}
-  .sched-row .sched-time small{display:inline}
+/* ============ 香盤表の行（カード型・2段構成） ============
+   左：時刻・所要・区分（いつ・どれだけ）
+   右：内容 → 場所・カット・人・機材 → 内訳 → 備考（何を・どこで・誰が）
+   列に押し込まず、情報の種類ごとに段を分けて読みやすくする */
+.sched-table .sched-hdr{display:none}
+.sched-table .sched-row{
+  display:grid;grid-template-columns:20px 112px minmax(0,1fr) 30px;
+  gap:4px 14px;align-items:start;padding:12px 12px 12px 10px;
+}
+.sched-row .sr-handle{padding-top:4px;text-align:center}
+.sr-side{display:flex;flex-direction:column;gap:6px}
+.sr-side .sched-time{font-size:17px;line-height:1.15}
+.sr-side .sched-time small{font-size:11px;margin-top:1px}
+.sr-side .sr-min{display:flex;align-items:center;gap:4px;font-size:var(--fs-xs);color:var(--ink-3)}
+.sched-row .sr-side .sr-min input{width:58px;padding:3px 5px}
+.sched-row .sr-side select{padding:3px 4px;font-weight:700}
+.sr-side .bd-toggle{align-self:flex-start;font-size:10px;padding:1px 6px}
+.sr-body{display:flex;flex-direction:column;gap:7px;min-width:0}
+.sched-row .sr-body textarea.sr-title{
+  font-size:15px;font-weight:700;line-height:1.5;padding:4px 8px;
+  background:transparent;border-color:transparent;
+}
+.sched-row .sr-body textarea.sr-title:hover{border-color:var(--line)}
+.sched-row .sr-body textarea.sr-title:focus{background:#fff;border-color:var(--accent)}
+.sr-meta{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:flex-start;font-size:var(--fs-xs);padding-left:8px}
+.sr-meta .mi{display:inline-flex;align-items:flex-start;gap:6px;min-width:0}
+.sr-meta .mi-k{color:var(--ink-3);font-weight:700;white-space:nowrap;padding-top:4px;letter-spacing:.04em}
+.sr-meta .mi-v{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0}
+.sr-meta .mi-loc{flex:0 1 260px}
+.sr-meta .mi-loc .mi-v{flex:1}
+.sched-row .sr-meta .mi-loc textarea{font-size:var(--fs-xs);padding:3px 6px;min-height:26px}
+.sr-meta .tag{display:inline-block;background:var(--surface-dim);border:1px solid var(--line-strong);border-radius:10px;padding:1px 8px;font-size:var(--fs-xs);line-height:1.5}
+.sr-meta .tag.eq{background:var(--accent-weak);border-color:var(--accent);color:var(--accent);font-weight:600}
+.sr-meta .shot-chk{margin-top:0}
+.sr-meta .cut-nos{font-family:var(--font-mono);color:var(--ink-2);padding-top:3px}
+.sr-meta .mi-empty{color:var(--ink-3);padding-top:3px}
+/* 内訳：比率の帯＋編集チップ */
+.sr-bd{padding-left:8px}
+.bd-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--line);margin-bottom:5px;max-width:520px}
+.bd-bar span{display:block;height:100%}
+.bd-c0{background:#0f4c81!important}.bd-c1{background:#3f88c5!important}.bd-c2{background:#7fb3d5!important}.bd-c3{background:#c98a00!important}.bd-c4{background:#2e8b57!important}
+.bd-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:var(--fs-xs)}
+.bd-chips .bd-k{color:var(--ink-3);font-weight:700;margin-right:2px}
+.bd-chips .bd-item{display:inline-flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1px 4px 1px 3px}
+.bd-chips .bd-item i{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 2px 0 4px}
+
+.sched-row .bd-chips input{border:none;background:transparent;padding:2px 3px;font-size:var(--fs-xs)}
+.sched-row .bd-chips input:focus{background:#fff;outline:1px solid var(--accent)}
+.sched-row .bd-chips input.bd-min{width:40px;text-align:right;font-family:var(--font-mono)}
+.bd-chips .bd-del{border:none;background:none;color:var(--ink-3);cursor:pointer;font-size:12px;padding:0 3px}
+.bd-chips .bd-sum{font-family:var(--font-mono);color:var(--ink-2);font-weight:700;margin-left:4px}
+/* 備考：普段は控えめ、書くと読みやすい本文として表示 */
+.sched-row .sr-body textarea.sr-note{
+  font-size:13px;line-height:1.7;padding:6px 10px;background:#fff;border:1px solid var(--line);
+  border-left:3px solid var(--line-strong);border-radius:0 4px 4px 0;color:var(--ink);
+}
+.sched-row .sr-body textarea.sr-note:placeholder-shown{background:transparent;border-color:transparent;border-left-color:var(--line);padding-top:2px;padding-bottom:2px;min-height:24px}
+.sched-row .sr-body textarea.sr-note:focus{background:#fff;border-color:var(--accent);border-left-color:var(--accent)}
+/* 準備の機材チェック・当日記録は1行の帯 */
+.sr-strip{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:var(--fs-xs);padding:5px 8px;border-radius:4px;background:rgba(255,255,255,.75);border:1px solid var(--line)}
+.sr-strip .sx-title{font-weight:700;color:var(--ink-2)}
+.sr-strip label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap}
+.sched-row .sr-strip input[type=checkbox]{width:auto}
+.sched-row .sr-strip input[type=time]{width:auto;padding:2px 4px;font-size:var(--fs-xs);font-family:var(--font-mono)}
+.sched-row .sr-del{padding-top:2px}
+@media (max-width:760px){
+  .sched-table .sched-row{grid-template-columns:18px minmax(0,1fr) 30px;padding:10px 8px}
+  .sched-row .sr-side{grid-column:2/3;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}
+  .sched-row .sr-body{grid-column:2/4}
+  .sched-row .sr-del{grid-column:3/4;grid-row:1}
+  .sr-side .sched-time{display:flex;align-items:baseline;gap:5px}
+  .sr-side .sched-time small{display:inline}
+  .sched-row .sr-side select{width:auto}
 }
 
 /* ============ 共有ページ（閲覧専用） ============ */
@@ -1005,11 +1060,30 @@ body.share-mode .warn-banner{display:none!important}
 .pdf-sched .ps-chk{display:block;white-space:nowrap}
 .pdf-sched .ps-chk b{font-size:14px}
 .pdf-sched .ps-win{font-size:10.5px;color:#9a6700}
-.pdf-sched .ps-table tr.ps-other td{background:#f6f4ec}
-.pdf-sched .ps-table tr.ps-t-prep td{background:#fff6e0}
-.pdf-sched .ps-table tr.ps-t-break td{background:#ecf7f0}
-.pdf-sched .ps-table tr.ps-t-move td{background:#eef1f4}
-.pdf-sched .ps-table tr.ps-t-strike td{background:#f4eef8}
+.pdf-sched .ps-table .ps-other td{background:#f6f4ec}
+.pdf-sched .ps-table .ps-t-prep td{background:#fff6e0}
+.pdf-sched .ps-table .ps-t-break td{background:#ecf7f0}
+.pdf-sched .ps-table .ps-t-move td{background:#eef1f4}
+.pdf-sched .ps-table .ps-t-strike td{background:#f4eef8}
+.pdf-sched .ps-table tbody.ps-row{page-break-inside:avoid}
+.pdf-sched .ps-table tbody.ps-row td{border-top:1px solid #cfd6dc}
+.pdf-sched .ps-table tr.ps-subrow td{border-top:1px dashed #d5dbe0;padding-top:5px;padding-bottom:6px}
+.pdf-sched .ps-label{font-weight:700}
+.pdf-sched .ps-time{font-weight:700}
+.pdf-sched .ps-dur{display:flex;gap:5px;align-items:center;margin-top:4px;font-size:.88em;color:#4b5563}
+.pdf-sched .ps-type{display:inline-block;border:1px solid #9aa5b1;border-radius:3px;padding:0 4px;font-size:.92em;line-height:1.45;background:#fff;color:#1b2430;font-weight:700}
+.pdf-sched .ps-t-prep .ps-type{border-color:#c98a00;color:#8a5d00}
+.pdf-sched .ps-t-break .ps-type{border-color:#2e8b57;color:#1f6b42}
+.pdf-sched .ps-t-move .ps-type{border-color:#6b7c8f;color:#4b5866}
+.pdf-sched .ps-t-strike .ps-type{border-color:#7a4fa0;color:#5d3a7c}
+.pdf-sched tbody:not(.ps-other) .ps-type{border-color:#0f4c81;color:#0f4c81}
+.pdf-sched .ps-sub-line{display:flex;gap:8px;line-height:1.55;font-size:.92em}
+.pdf-sched .ps-sub-line + .ps-sub-line{margin-top:3px}
+.pdf-sched .ps-sub-k{flex:0 0 auto;min-width:4.2em;font-weight:700;color:#0f4c81;font-size:.9em;padding-top:.1em}
+.pdf-sched .ps-sub-v{flex:1;color:#2b3440}
+.pdf-sched .ps-arrow{color:#9aa5b1;margin:0 5px}
+.pdf-sched .ps-eqi{display:inline-block;margin-right:12px;white-space:nowrap}
+.pdf-sched .ps-chk{white-space:nowrap}
 .pdf-sched .ps-bd{font-size:9.5px;color:#4b5563;line-height:1.35;margin-top:3px;text-align:left;white-space:nowrap}
 .pdf-sched .ps-eq{font-size:10px;color:#4b5563;margin-top:3px;line-height:1.5}
 .pdf-sched .ps-c{text-align:center}
@@ -5071,36 +5145,42 @@ function schedRowHTML(r) {
   const cutsOK = typeHasCuts(r.type);
   const hasBd = (r.breakdown || []).length > 0;
   const win = locationWindow(rowLoc(r));
+  const nos = r.cutNos || [];
+  const cast = r.cast || [], equip = r.equipment || [];
   return `
     <div class="sched-row type-${r.type} ${r.stale ? "stale" : ""}"
          data-row-id="${r.id}" data-drag="schedrow">
       <span class="sr-handle" title="ドラッグで並べ替え">⠿</span>
-      <span class="sched-time">${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small></span>
-      <span class="sr-type">
+      <div class="sr-side">
+        <span class="sched-time">${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small></span>
+        <span class="sr-min"><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}"
+          aria-label="所要時間（分）" ${hasBd ? `readonly title="内訳の合計です。内訳で調整してください"` : ""}>分</span>
         <select data-srow="type" aria-label="区分">
           ${SCHED_TYPES.map(t => `<option value="${t[0]}" ${r.type === t[0] ? "selected" : ""}>${t[1]}</option>`).join("")}
         </select>
-      </span>
-      <span class="sr-label"><textarea class="sr-grow" data-srow="label" rows="1" aria-label="内容"
-        placeholder="${esc(TYPE_PLACEHOLDER[r.type] || "内容")}">${esc(r.label)}</textarea>${
-        r.stale ? `<span class="stale-badge">絵コンテから削除済</span>` : ""}</span>
-      <span class="sr-loc"><textarea class="sr-grow" data-srow="location" rows="1" aria-label="撮影場所"
-        title="${r.locAuto !== false ? "カットの撮影場所から自動入力（手で直すとその内容を優先します）" : "手入力の内容を優先中（空にすると自動入力に戻ります）"}"
-        placeholder="${cutsOK ? "カット選択で自動入力" : "場所"}">${esc(r.location || "")}</textarea>${
-        win ? `<span class="win-badge">窓 ${esc(win)}</span>` : ""}</span>
-      <span class="sr-cuts sr-shot">${cutsOK ? `
-        <span class="sc-head">${r.cutNos && r.cutNos.length ? "#" + esc(compactNos(r.cutNos)) : "—"}</span>
-        ${shotChkHTML(r)}
-        <button type="button" class="mini-btn" data-srow-act="editCuts">カット選択</button>` : "—"}
-      </span>
-      <span class="sr-cast sr-tags">${(r.cast || []).length ? (r.cast || []).map(v => `<span class="tag">${esc(v)}</span>`).join("") : "—"}</span>
-      <span class="sr-equip sr-tags">${(r.equipment || []).length ? (r.equipment || []).map(v => `<span class="tag eq">${esc(v)}</span>`).join("") : "—"}</span>
-      <span class="sr-min"><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}"
-        aria-label="所要時間（分）" ${hasBd ? `readonly title="内訳の合計です。内訳で調整してください"` : ""}>${
-        hasBd ? "" : `<button type="button" class="mini-btn" data-srow-act="bdAdd" title="所要時間の内訳を入れる">＋内訳</button>`}</span>
+        ${hasBd ? "" : `<button type="button" class="mini-btn bd-toggle" data-srow-act="bdAdd" title="所要時間の内訳を入れる">＋内訳</button>`}
+      </div>
+      <div class="sr-body">
+        <textarea class="sr-grow sr-title" data-srow="label" rows="1" aria-label="内容"
+          placeholder="${esc(TYPE_PLACEHOLDER[r.type] || "内容")}">${esc(r.label)}</textarea>${
+          r.stale ? `<span class="stale-badge" style="align-self:flex-start">絵コンテから削除済</span>` : ""}
+        <div class="sr-meta">
+          <span class="mi mi-loc"><span class="mi-k">場所</span><span class="mi-v">
+            <textarea class="sr-grow" data-srow="location" rows="1" aria-label="撮影場所"
+              title="${r.locAuto !== false ? "カットの撮影場所から自動入力（手で直すとその内容を優先します）" : "手入力の内容を優先中（空にすると自動入力に戻ります）"}"
+              placeholder="${cutsOK ? "カット選択で自動入力" : "場所"}">${esc(r.location || "")}</textarea>${
+            win ? `<span class="win-badge">窓 ${esc(win)}</span>` : ""}</span></span>
+          ${cutsOK ? `<span class="mi mi-cuts"><span class="mi-k">カット</span><span class="mi-v">
+            ${nos.length ? shotChkHTML(r) : `<span class="mi-empty">未割当</span>`}
+            <button type="button" class="mini-btn" data-srow-act="editCuts">カット選択</button></span></span>` : ""}
+          ${cast.length ? `<span class="mi"><span class="mi-k">演者</span><span class="mi-v">${cast.map(v => `<span class="tag">${esc(v)}</span>`).join("")}</span></span>` : ""}
+          ${equip.length ? `<span class="mi"><span class="mi-k">機材</span><span class="mi-v">${equip.map(v => `<span class="tag eq">${esc(v)}</span>`).join("")}</span></span>` : ""}
+        </div>
+        ${bdHTML(r)}
+        <textarea class="sr-grow sr-note" data-srow="note" rows="1" aria-label="備考" placeholder="＋ 備考を書く（段取り・注意点など）">${esc(r.note || "")}</textarea>
+        ${r.type === "prep" ? eqCheckHTML(r) : ""}${schedLive ? liveHTML(r) : ""}
+      </div>
       <span class="sr-del"><button type="button" class="icon-btn del" data-srow-act="del" aria-label="この行を削除">✕</button></span>
-      <div class="sr-extra">
-        <label class="sx-note"><span class="sx-title">備考</span><textarea class="sr-grow" data-srow="note" rows="1" placeholder="当日メモ・段取り・注意点など（長文OK）">${esc(r.note || "")}</textarea></label>${bdHTML(r)}${r.type === "prep" ? eqCheckHTML(r) : ""}${schedLive ? liveHTML(r) : ""}</div>
     </div>`;
 }
 
@@ -5113,14 +5193,18 @@ function bdLabelW(t) {
 function bdHTML(r) {
   const list = r.breakdown || [];
   if (!list.length) return "";
-  return `<div class="sx-box sx-bd"><span class="sx-title">所要時間の内訳</span>${list.map(b => `
-    <span class="bd-item" data-bd-id="${b.id}">
-      <input type="text" class="bd-label" data-bd="label" value="${esc(b.label || "")}" style="width:${bdLabelW(b.label)}em" placeholder="項目" list="bdPresets" aria-label="内訳の項目">
-      <input type="number" class="bd-min" data-bd="min" min="0" step="5" value="${Number(b.min) || 0}" aria-label="分">分
-      <button type="button" class="bd-del" data-srow-act="bdDel" data-bd-id="${b.id}" aria-label="この内訳を削除">✕</button>
-    </span>`).join("")}
-    <button type="button" class="mini-btn" data-srow-act="bdAdd">＋項目</button>
-    <span class="bd-sum">＝ ${bdTotal(r)}分</span></div>`;
+  const total = bdTotal(r) || 1;
+  return `<div class="sr-bd">
+    <div class="bd-bar" aria-hidden="true">${list.map((b, i) => `<span class="bd-c${i % 5}" style="flex:${Math.max(0, Number(b.min) || 0)} 0 0" title="${esc(b.label || "")} ${Number(b.min) || 0}分"></span>`).join("")}</div>
+    <div class="bd-chips sx-bd"><span class="bd-k">内訳</span>${list.map((b, i) => `
+      <span class="bd-item" data-bd-id="${b.id}"><i class="bd-c${i % 5}"></i>
+        <input type="text" class="bd-label" data-bd="label" value="${esc(b.label || "")}" style="width:${bdLabelW(b.label)}em" placeholder="項目" list="bdPresets" aria-label="内訳の項目">
+        <input type="number" class="bd-min" data-bd="min" min="0" step="5" value="${Number(b.min) || 0}" aria-label="分">分
+        <button type="button" class="bd-del" data-srow-act="bdDel" data-bd-id="${b.id}" aria-label="この内訳を削除">✕</button>
+      </span>`).join("")}
+      <button type="button" class="mini-btn" data-srow-act="bdAdd">＋</button>
+      <span class="bd-sum">＝ ${bdTotal(r)}分</span></div>
+  </div>`;
 }
 
 /* 準備行の機材チェック。その日の撮影で使う機材（無ければ登録機材すべて） */
@@ -5133,9 +5217,9 @@ function prepEquipList(r) {
 }
 function eqCheckHTML(r) {
   const list = prepEquipList(r);
-  if (!list.length) return `<div class="sx-box"><span class="sx-title">機材チェック</span>機材が登録されていません（絵コンテ画面の機材登録から追加できます）</div>`;
+  if (!list.length) return `<div class="sr-strip"><span class="sx-title">機材チェック</span>機材が登録されていません（絵コンテ画面の機材登録から追加できます）</div>`;
   const n = list.filter(v => r.equipCheck && r.equipCheck[v]).length;
-  return `<div class="sx-box sx-eq"><span class="sx-title">機材チェック</span>${list.map(v => `
+  return `<div class="sr-strip sx-eq"><span class="sx-title">機材チェック</span>${list.map(v => `
     <label><input type="checkbox" data-eqchk="${esc(v)}" ${r.equipCheck && r.equipCheck[v] ? "checked" : ""}>${esc(v)}</label>`).join("")}
     <span class="eq-count ${n === list.length ? "done" : ""}">${n}/${list.length}</span></div>`;
 }
@@ -5152,7 +5236,7 @@ function liveDiffHTML(d) {
   return d > 0 ? `<span class="live-diff late">${d}分 遅れ</span>` : `<span class="live-diff early">${-d}分 巻き</span>`;
 }
 function liveHTML(r) {
-  return `<div class="sx-box sx-live"><span class="sx-title">当日の記録</span>
+  return `<div class="sr-strip sx-live"><span class="sx-title">当日の記録</span>
     実際の開始 <input type="time" data-srow="actualStart" value="${esc(r.actualStart || "")}" aria-label="実際の開始時刻">
     <button type="button" class="mini-btn" data-srow-act="liveNow" data-k="actualStart">今</button>
     終了 <input type="time" data-srow="actualEnd" value="${esc(r.actualEnd || "")}" aria-label="実際の終了時刻">
@@ -5468,6 +5552,8 @@ $("#schedTable").addEventListener("input", (e) => {
     if (mi) mi.value = r.minutes;
     const sum = rowEl.querySelector(".bd-sum");
     if (sum) sum.textContent = "＝ " + r.minutes + "分";
+    const segs = rowEl.querySelectorAll(".bd-bar span");
+    (r.breakdown || []).forEach((b, i) => { if (segs[i]) segs[i].style.flex = Math.max(0, Number(b.min) || 0) + " 0 0"; });
     refreshSchedTimes();
   } else {
     item.label = e.target.value;
@@ -5841,46 +5927,43 @@ function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
     </div>
     <table class="ps-table">
       <thead><tr>
-        <th style="width:${o.orient === "landscape" ? 30 : 26}px">No</th>
-        <th style="width:${o.orient === "landscape" ? 84 : 70}px">時刻</th>
-        <th style="width:${o.orient === "landscape" ? 44 : 38}px">所要</th>
-        <th style="width:${o.orient === "landscape" ? 48 : 40}px">区分</th>
+        <th style="width:${o.orient === "landscape" ? 28 : 24}px">No</th>
+        <th style="width:${o.orient === "landscape" ? 92 : 80}px">時刻・所要</th>
         <th>内容</th>
-        <th style="width:${o.orient === "landscape" ? 104 : 74}px">撮影場所</th>
-        <th style="width:${o.orient === "landscape" ? 62 : 52}px">カット</th>
-        <th style="width:${o.orient === "landscape" ? 96 : 84}px">横 / 縦</th>
-        <th style="width:${o.orient === "landscape" ? 80 : 56}px">演者</th>
-        <th style="width:${o.orient === "landscape" ? 112 : 80}px">機材</th>
-        <th style="width:${o.orient === "landscape" ? 124 : 92}px">備考</th>
+        <th style="width:${o.orient === "landscape" ? 120 : 84}px">撮影場所</th>
+        <th style="width:${o.orient === "landscape" ? 150 : 112}px">カット・横 / 縦</th>
+        <th style="width:${o.orient === "landscape" ? 92 : 64}px">演者</th>
+        <th style="width:${o.orient === "landscape" ? 140 : 92}px">機材</th>
       </tr></thead>
-      <tbody>
       ${rows.map((r, i) => {
         const nos = r.cutNos || [];
-        const chk = nos.length
-          ? nos.map(no => {
-              const st = (r.shot && r.shot[no]) || {};
-              return `<span class="ps-chk">#${no} <b>${st.h ? "☑" : "☐"}</b>横 <b>${st.v ? "☑" : "☐"}</b>縦</span>`;
-            }).join("")
-          : "—";
-        return `
-        <tr class="${r.type === "shoot" ? "" : "ps-other ps-t-" + r.type}">
-          <td class="ps-c">${i + 1}</td>
-          <td class="ps-mono">${fmtHM(r._start)}<br>〜${fmtHM(r._end)}</td>
-          <td class="ps-c ps-mono">${Number(r.minutes) || 0}分${(r.breakdown || []).length
-            ? `<div class="ps-bd">${(r.breakdown || []).map(b => `${esc(b.label || "項目")} ${Number(b.min) || 0}`).join("<br>")}</div>` : ""}</td>
-          <td class="ps-c">${schedTypeName(r.type)}</td>
-          <td>${esc(r.label)}${r.stale ? "（絵コンテから削除済）" : ""}</td>
-          <td>${esc(r.location || "") || "—"}${
-            locationWindow(rowLoc(r)) ? `<br><span class="ps-win">窓: ${esc(locationWindow(rowLoc(r)))}</span>` : ""}</td>
-          <td class="ps-mono">${nos.length ? "#" + esc(compactNos(nos)) : "—"}</td>
-          <td class="ps-chkcell">${typeHasCuts(r.type) ? chk : "—"}</td>
+        const chk = nos.map(no => {
+          const st = (r.shot && r.shot[no]) || {};
+          return `<span class="ps-chk"><span class="ps-mono">#${no}</span> <b>${st.h ? "☑" : "☐"}</b>横 <b>${st.v ? "☑" : "☐"}</b>縦</span>`;
+        }).join("");
+        /* 下段：備考・内訳・機材チェックを横幅いっぱいでまとめる */
+        const sub = [];
+        if (r.note) sub.push(`<div class="ps-sub-line"><span class="ps-sub-k">備考</span><span class="ps-sub-v">${esc(r.note)}</span></div>`);
+        if ((r.breakdown || []).length) sub.push(`<div class="ps-sub-line"><span class="ps-sub-k">内訳</span><span class="ps-sub-v">${
+          (r.breakdown || []).map(b => `${esc(b.label || "項目")} <b>${Number(b.min) || 0}分</b>`).join('<span class="ps-arrow">→</span>')}</span></div>`);
+        if (r.type === "prep" && prepEquipList(r).length) sub.push(`<div class="ps-sub-line"><span class="ps-sub-k">機材確認</span><span class="ps-sub-v">${
+          prepEquipList(r).map(v => `<span class="ps-eqi">${r.equipCheck && r.equipCheck[v] ? "☑" : "☐"} ${esc(v)}</span>`).join("")}</span></div>`);
+        const rs = sub.length ? ` rowspan="2"` : "";
+        const win = locationWindow(rowLoc(r));
+        return `<tbody class="ps-row ${r.type === "shoot" ? "" : "ps-other ps-t-" + r.type}">
+        <tr>
+          <td class="ps-c ps-no"${rs}>${i + 1}</td>
+          <td class="ps-timecell"${rs}><div class="ps-mono ps-time">${fmtHM(r._start)}〜${fmtHM(r._end)}</div>
+            <div class="ps-dur"><span class="ps-type">${schedTypeName(r.type)}</span><span class="ps-mono">${Number(r.minutes) || 0}分</span></div></td>
+          <td class="ps-label">${esc(r.label)}${r.stale ? "（絵コンテから削除済）" : ""}</td>
+          <td>${esc(r.location || "") || "—"}${win ? `<br><span class="ps-win">窓: ${esc(win)}</span>` : ""}</td>
+          <td class="ps-chkcell">${typeHasCuts(r.type) && nos.length ? chk : "—"}</td>
           <td>${esc((r.cast || []).join("・")) || "—"}</td>
           <td>${esc((r.equipment || []).join("・")) || "—"}</td>
-          <td>${esc(r.note || "")}${r.type === "prep" && prepEquipList(r).length
-            ? `<div class="ps-eq">${prepEquipList(r).map(v => `${r.equipCheck && r.equipCheck[v] ? "☑" : "☐"}${esc(v)}`).join(" ")}</div>` : ""}</td>
-        </tr>`;
+        </tr>${sub.length ? `
+        <tr class="ps-subrow"><td colspan="5">${sub.join("")}</td></tr>` : ""}
+        </tbody>`;
       }).join("")}
-      </tbody>
     </table>
     <div class="ps-foot"><span>${esc(state.meta.title || "無題プロジェクト")} — ${esc(day.name)}</span><span>${pageNo} / ${pageTotal}</span></div>
   </div>`;
