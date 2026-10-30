@@ -231,7 +231,7 @@ img{display:block;max-width:100%}
 .sched-table{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius)}
 .sched-hdr,.sched-row{
   display:grid;align-items:start;gap:8px;padding:7px 10px;
-  grid-template-columns:24px 96px 70px minmax(0,1.4fr) 92px minmax(0,1fr) minmax(0,1.2fr) 62px minmax(0,1fr) 28px;
+  grid-template-columns:24px 96px 74px minmax(0,1.3fr) minmax(0,.9fr) 92px minmax(0,1fr) minmax(0,1.1fr) 62px minmax(0,1fr) 28px;
 }
 .sched-hdr{
   background:var(--ink);color:#fff;font-size:var(--fs-xs);letter-spacing:.08em;
@@ -241,6 +241,40 @@ img{display:block;max-width:100%}
 .sched-row{border-top:1px solid var(--line);font-size:var(--fs-sm)}
 .sched-row:hover{background:var(--surface-dim)}
 .sched-row.type-other{background:#fbfaf6}
+/* 区分ごとの色（左端の帯） */
+.sched-row{box-shadow:inset 4px 0 0 transparent}
+.sched-row.type-shoot{box-shadow:inset 4px 0 0 #0f4c81}
+.sched-row.type-prep{box-shadow:inset 4px 0 0 #c98a00;background:#fffaf0}
+.sched-row.type-move{box-shadow:inset 4px 0 0 #6b7c8f;background:#f5f7f9}
+.sched-row.type-break{box-shadow:inset 4px 0 0 #2e8b57;background:#f3faf5}
+.sched-row.type-strike{box-shadow:inset 4px 0 0 #7a4fa0;background:#f8f4fb}
+.sched-row.type-other{box-shadow:inset 4px 0 0 #a8a29e}
+/* 行の下段（内訳・機材チェック・当日記録） */
+.sched-row .sr-extra{grid-column:3/-1;display:flex;flex-direction:column;gap:6px}
+.sched-row .sr-extra:empty{display:none}
+.sx-box{border:1px dashed var(--line-strong);border-radius:4px;padding:6px 8px;background:rgba(255,255,255,.7);font-size:var(--fs-xs)}
+.sx-box .sx-title{font-weight:700;color:var(--ink-2);margin-right:6px}
+.sx-bd{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sx-bd .bd-item{display:inline-flex;align-items:center;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:2px 4px}
+.sched-row .sx-bd .bd-item input{width:auto;padding:2px 4px;font-size:var(--fs-xs)}
+.sched-row .sx-bd .bd-item input.bd-label{width:110px}
+.sched-row .sx-bd .bd-item input.bd-min{width:52px;text-align:right;font-family:var(--font-mono)}
+.sx-bd .bd-del{border:none;background:none;color:var(--ink-3);cursor:pointer;font-size:13px;padding:0 2px}
+.sx-bd .bd-sum{font-family:var(--font-mono);color:var(--ink-2)}
+.sx-eq{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.sx-eq label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap}
+.sched-row .sx-eq input[type=checkbox]{width:auto}
+.sx-eq .eq-count{font-family:var(--font-mono);color:var(--ink-2)}
+.sx-eq .eq-count.done{color:#2e8b57;font-weight:700}
+.sx-live{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.sched-row .sx-live input[type=time]{width:auto;padding:2px 4px;font-size:var(--fs-xs);font-family:var(--font-mono)}
+.live-diff{font-weight:700;font-family:var(--font-mono)}
+.live-diff.late{color:#c0392b}.live-diff.early{color:#2e8b57}.live-diff.even{color:var(--ink-2)}
+.sched-row input.min-input[readonly]{background:#eef1f4;color:var(--ink-2)}
+.sr-min .mini-btn{margin-top:4px;font-size:10px;padding:1px 5px}
+.ds-live{font-weight:700;font-family:var(--font-mono)}
+.ds-live.late{color:#ffb4a8}.ds-live.early{color:#a6e3b8}
+.live-toggle{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-sm);cursor:pointer;white-space:nowrap}
 .sched-row.stale{background:var(--warn-bg)}
 .sched-row.dragging{opacity:.35}
 .sched-row .sr-handle{cursor:grab;color:var(--ink-3);user-select:none;font-size:15px;line-height:1.4}
@@ -274,9 +308,11 @@ img{display:block;max-width:100%}
   .sched-row{grid-template-columns:24px minmax(0,1fr) 28px;row-gap:5px;padding:10px}
   .sched-row .sched-time{grid-column:2/3;grid-row:1}
   .sched-row .sr-del{grid-column:3/4;grid-row:1;justify-self:end}
-  .sched-row .sr-type,.sched-row .sr-label,.sched-row .sr-cuts,
+  .sched-row .sr-type,.sched-row .sr-label,.sched-row .sr-loc,.sched-row .sr-cuts,
   .sched-row .sr-cast,.sched-row .sr-equip,.sched-row .sr-min,
-  .sched-row .sr-note{grid-column:2/4}
+  .sched-row .sr-note,.sched-row .sr-extra{grid-column:2/4}
+  .sched-row .sr-loc{display:flex;align-items:center;gap:6px}
+  .sched-row .sr-loc::before{content:"撮影場所";font-size:var(--fs-xs);color:var(--ink-3);white-space:nowrap}
   .sched-row .sr-min{display:flex;align-items:center;gap:6px}
   .sched-row .sr-min::before{content:"所要(分)";font-size:var(--fs-xs);color:var(--ink-3)}
   .sched-row .sr-min input{max-width:84px}
@@ -319,6 +355,10 @@ body.share-mode .warn-banner{display:none!important}
 .sv-row{display:flex;gap:12px;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)}
 .sv-rows > .sv-row:first-child{border-top:none}
 .sv-row.other{background:#fbfaf6}
+.sv-row.t-prep{background:#fffaf0}.sv-row.t-break{background:#f3faf5}.sv-row.t-move{background:#f5f7f9}.sv-row.t-strike{background:#f8f4fb}
+.sv-type{display:inline-block;font-size:11px;font-weight:700;border:1px solid var(--line-strong);border-radius:3px;padding:0 5px;margin-right:6px;background:#fff}
+.sv-loc{font-size:var(--fs-xs);color:var(--ink-2);margin-top:2px}
+.sv-bd{font-size:var(--fs-xs);color:var(--ink-3);margin-top:3px}
 .sv-row .sv-time{
   font-family:var(--font-mono);font-weight:700;font-size:var(--fs-md);
   white-space:nowrap;min-width:92px;line-height:1.4;
@@ -961,6 +1001,12 @@ body.share-mode .warn-banner{display:none!important}
 .pdf-sched .ps-chk b{font-size:14px}
 .pdf-sched .ps-win{font-size:10.5px;color:#9a6700}
 .pdf-sched .ps-table tr.ps-other td{background:#f6f4ec}
+.pdf-sched .ps-table tr.ps-t-prep td{background:#fff6e0}
+.pdf-sched .ps-table tr.ps-t-break td{background:#ecf7f0}
+.pdf-sched .ps-table tr.ps-t-move td{background:#eef1f4}
+.pdf-sched .ps-table tr.ps-t-strike td{background:#f4eef8}
+.pdf-sched .ps-bd{font-size:9.5px;color:#4b5563;line-height:1.35;margin-top:3px;text-align:left;white-space:nowrap}
+.pdf-sched .ps-eq{font-size:10px;color:#4b5563;margin-top:3px;line-height:1.5}
 .pdf-sched .ps-c{text-align:center}
 .pdf-sched .ps-mono{font-family:var(--font-mono);white-space:nowrap}
 .pdf-sched .ps-foot{position:absolute;bottom:14px;left:32px;right:32px;display:flex;justify-content:space-between;font-size:9px;color:#6a7480;border-top:1px solid #cfd6dc;padding-top:4px}
@@ -1089,6 +1135,7 @@ body.share-mode .warn-banner{display:none!important}
     <button type="button" class="btn primary" id="btnSchedGen">絵コンテから取り込み</button>
     <button type="button" class="btn" id="btnSchedAddRow">＋ 行を追加</button>
     <button type="button" class="btn" id="btnCastTime">出演者の拘束時間</button>
+    <label class="live-toggle" title="各行に実際の開始・終了時刻を記録し、予定とのずれを表示します"><input type="checkbox" id="chkSchedLive"> 当日の進行を記録</label>
     <div class="menu-wrap">
       <button type="button" class="btn" id="btnSchedExport" aria-haspopup="true" aria-expanded="false">書き出し ▾</button>
       <div class="menu" id="schedExportMenu" role="menu">
@@ -1444,7 +1491,10 @@ body.share-mode .warn-banner{display:none!important}
       <p><b>絵コンテの各カットに撮影日を割り当てて</b>おくと（コマの「撮影日」欄／上部「表示項目」で表示切替）、<b>「絵コンテから取り込み」</b>で各日の行へ自動で振り分けられます。手で足した行にも「カット選択」ボタンからカット番号を割り当てられ、演者・機材が自動で入ります。</p>
       <p><b>横・縦の撮影済みチェック</b>は各行のカット番号ごとに「☐横 ☐縦」が並びます。その場でチェックすると、日別・全体の残り件数が画面上部に出ます。<b>縦の撮り忘れ</b>はチェック機能でも警告されます。</p>
       <p><b>「出演者の拘束時間」</b>ボタンで、演者ごとの集合・解散・拘束時間を日別に自動集計します（テキストでコピー可）。<b>撮影設定</b>欄に機材やカメラ設定を書いておくと、香盤表PDFの見出しに印字されます。</p>
-      <p><b>開始時刻と各行の所要時間を入れると、以降の時刻が自動で積み上がります。</b>行を並べ替えたり所要時間を変えると、全体の時刻がその場で再計算されます。「＋行を追加」で移動・休憩・セッティングなどの行も挟めます（区分を「その他」にすると色が変わります）。備考欄は当日のメモにお使いください。</p>
+      <p><b>開始時刻と各行の所要時間を入れると、以降の時刻が自動で積み上がります。</b>行を並べ替えたり所要時間を変えると、全体の時刻がその場で再計算されます。「＋行を追加」で準備・移動・休憩などの行も挟めます。備考欄は当日のメモにお使いください。</p>
+      <p><b>区分</b>は「撮影／準備／移動／休憩／撤収／その他」から選べ、区分ごとに色分けされます。<b>撮影とその他以外ではカット選択は表示されません</b>（カットを割り当てない行のため）。<b>撮影場所</b>は専用の欄があり、取り込み時や「カット選択」で<b>カットの撮影場所が自動で入ります</b>。手で直した場合はその内容を優先し、空にすると自動入力に戻ります。</p>
+      <p><b>所要時間の内訳</b>：所要時間の下の「＋内訳」で、セッティング・撮影・撤収などの内訳を別枠で入れられます。<b>内訳の合計がそのまま所要時間になります</b>（PDF・CSV・共有ページにも出ます）。<b>準備</b>の行には<b>機材チェック</b>が出ます（その日の撮影で使う機材。未設定なら登録機材すべて）。</p>
+      <p><b>当日の進行記録</b>：上部の「当日の進行を記録」をオンにすると、各行に実際の開始・終了時刻の欄が出ます（「今」で現在時刻を入力）。<b>予定との遅れ／巻き</b>が行と日の見出しに表示されます。</p>
       <div class="help-note"><b>絵コンテを直した後にもう一度「取り込み」を押しても、入力済みの時刻・備考は消えません。</b>新しいカットの行が追加され、絵コンテから消えたカットの行には「絵コンテから削除済」の印が付きます（自動では消さないので、確認してから削除してください）。</div>
       <p>書き出しは<b>PDF 日別</b>（表示中の日）と<b>PDF 全日程まとめ</b>、<b>CSV</b>（撮影日の列つき）に対応しています。PDFには横・縦のチェック欄が入るので、現場で紙に書き込めます。用紙は<b>A4縦／A4横</b>、<b>1ページに収める／複数ページに分ける</b>を書き出しメニューで選べます（初期設定はA4縦・1ページに収める）。行数が多いと縮小されるため、文字が小さいと感じたら「複数ページに分ける」をお選びください。</p>
 
@@ -1567,6 +1617,7 @@ body.share-mode .warn-banner{display:none!important}
 
 <datalist id="locationList"></datalist>
 <datalist id="castList"></datalist>
+<datalist id="bdPresets"><option value="セッティング"><option value="リハーサル"><option value="撮影"><option value="確認・チェック"><option value="撤収"><option value="移動"></datalist>
 <div class="toast-area" id="toastArea" aria-live="polite"></div>
 <div id="pdfStage" aria-hidden="true"></div>
 
@@ -1580,7 +1631,7 @@ body.share-mode .warn-banner{display:none!important}
    ============================================================ */
 
 /* ---------------- アプリ情報 ---------------- */
-const APP_UPDATED = "2026-10-20";   /* 機能を更新したらこの日付を書き換える */
+const APP_UPDATED = "2026-10-30";   /* 機能を更新したらこの日付を書き換える */
 
 /* ---------------- state ---------------- */
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -4595,6 +4646,23 @@ function schedule() {
   s.rows.forEach(r => {
     if (!r.dayId || !ids.has(r.dayId)) r.dayId = s.days[0].id;
     if (!r.shot || typeof r.shot !== "object") r.shot = {};   /* 横/縦の撮影済み */
+    if (!SCHED_TYPES.some(t => t[0] === r.type)) r.type = "shoot";
+    if (!Array.isArray(r.breakdown)) r.breakdown = [];
+    if (!r.equipCheck || typeof r.equipCheck !== "object") r.equipCheck = {};
+    if (typeof r.actualStart !== "string") r.actualStart = "";
+    if (typeof r.actualEnd !== "string") r.actualEnd = "";
+    /* 撮影場所欄は新設。旧データは場所ごとの行なら内容欄の場所名、カット付きならカットから引き当て */
+    if (typeof r.location !== "string") {
+      r.locAuto = true;
+      if (String(r.srcKey || "").indexOf("loc:") === 0) {
+        r.location = r.label === "（撮影場所 未設定）" ? "" : (r.label || "");
+        r.autoLabel = r.label || "";   /* 次の取り込みで内容欄をカット内容に置き換えてよい印 */
+      } else {
+        r.location = (r.cutNos || []).length ? locFromCuts(r.cutNos) : "";
+      }
+    }
+    if (typeof r.locAuto !== "boolean") r.locAuto = true;
+    if (typeof r.autoLabel !== "string") r.autoLabel = "";
   });
   return s;
 }
@@ -4602,9 +4670,38 @@ const schedDays = () => schedule().days;
 const dayById = (id) => schedDays().find(d => d.id === id) || null;
 const rowsOfDay = (id) => schedule().rows.filter(r => r.dayId === id);
 
+/* 区分（撮影以外はカットを持たない。その他は従来どおりカット選択可） */
+const SCHED_TYPES = [
+  ["shoot", "撮影"], ["prep", "準備"], ["move", "移動"],
+  ["break", "休憩"], ["strike", "撤収"], ["other", "その他"]
+];
+const schedTypeName = (t) => (SCHED_TYPES.find(x => x[0] === t) || SCHED_TYPES[0])[1];
+const typeHasCuts = (t) => t === "shoot" || t === "other";
+const TYPE_PLACEHOLDER = {
+  shoot: "撮影内容", prep: "準備内容（例：機材セット・音レベル確認）", move: "移動（例：会議室→倉庫）",
+  break: "休憩・昼食", strike: "撤収・原状回復", other: "内容"
+};
+/* 選んだカットの撮影場所をまとめる（重複は1つに） */
+function locFromCuts(nos) {
+  const rows = flattenCuts();
+  const out = [];
+  (nos || []).forEach(no => {
+    const r = rows.find(x => x.no === no);
+    const l = r ? (r.cut.location || "").trim() : "";
+    if (l && out.indexOf(l) < 0) out.push(l);
+  });
+  return out.join("／");
+}
+/* 窓の向きなどの照合に使う「場所名」 */
+const rowLoc = (r) => (r.location || "").trim() || (String(r.srcKey || "").indexOf("loc:") === 0 ? (r.label || "") : "");
+/* 内訳の合計 */
+const bdTotal = (r) => (r.breakdown || []).reduce((a, b) => a + (Math.max(0, Number(b.min) || 0)), 0);
+
 const newSchedRow = (p) => Object.assign({
   id: uid(), dayId: "", type: "shoot", srcKey: "", label: "", cutNos: [],
   cast: [], equipment: [], minutes: 30, note: "", stale: false,
+  location: "", locAuto: true, autoLabel: "", breakdown: [], equipCheck: {},
+  actualStart: "", actualEnd: "",
   shot: {}   /* { "<カット番号>": { h:true, v:false } } */
 }, p || {});
 
@@ -4671,20 +4768,30 @@ function generateSchedule(unit) {
       const dayId = cutDayId(r.cut) || fallbackDay;
       const loc = (r.cut.location || "").trim() || "（撮影場所 未設定）";
       const key = "loc:" + dayId + ":" + loc;
-      if (!byKey.has(key)) byKey.set(key, { srcKey: key, dayId, label: loc, cutNos: [], cast: [], equipment: [], frames: 0 });
+      if (!byKey.has(key)) byKey.set(key, {
+        srcKey: key, dayId, label: "", contents: [],
+        location: (r.cut.location || "").trim(), cutNos: [], cast: [], equipment: [], frames: 0
+      });
       const g = byKey.get(key);
       g.cutNos.push(r.no);
+      const ct = (r.cut.content || "").trim().replace(/\s+/g, " ");
+      if (ct) g.contents.push(ct.length > 24 ? ct.slice(0, 24) + "…" : ct);
       g.frames += r.durF;
       cutEquipment(r.cut).forEach(v => { if (g.equipment.indexOf(v) < 0) g.equipment.push(v); });
       const c = (r.cut.cast || "").trim();
       if (c && g.cast.indexOf(c) < 0) g.cast.push(c);
     });
-    byKey.forEach(g => incoming.push(g));
+    byKey.forEach(g => {
+      /* 内容欄にはカット内容の要約、場所は撮影場所欄へ */
+      g.label = g.contents.length ? g.contents.join("／") : (g.location || "撮影");
+      incoming.push(g);
+    });
   } else {
     rows.forEach(r => incoming.push({
       srcKey: "cut:" + r.cut.id,
       dayId: cutDayId(r.cut) || fallbackDay,
       label: (r.cut.content || "").slice(0, 40) || `カット #${r.no}`,
+      location: (r.cut.location || "").trim(),
       cutNos: [r.no],
       cast: (r.cut.cast || "").trim() ? [(r.cut.cast || "").trim()] : [],
       equipment: cutEquipment(r.cut).slice(),
@@ -4702,7 +4809,9 @@ function generateSchedule(unit) {
     /* 所要時間の目安: カット数×10分（最低15分）。既存行の時間・備考は触らない */
     const guess = Math.max(15, g.cutNos.length * 10);
     if (cur) {
-      cur.label = g.label;
+      /* 内容欄は手で直していなければ更新（手入力は守る） */
+      if (!cur.label || cur.label === cur.autoLabel) { cur.label = g.label; cur.autoLabel = g.label; }
+      if (cur.locAuto !== false) cur.location = g.location;
       cur.cutNos = g.cutNos;
       cur.cast = g.cast;
       cur.equipment = g.equipment;
@@ -4711,7 +4820,8 @@ function generateSchedule(unit) {
       updated++;
     } else {
       s.rows.push(newSchedRow({
-        type: "shoot", dayId: g.dayId, srcKey: g.srcKey, label: g.label,
+        type: "shoot", dayId: g.dayId, srcKey: g.srcKey, label: g.label, autoLabel: g.label,
+        location: g.location, locAuto: true,
         cutNos: g.cutNos, cast: g.cast, equipment: g.equipment, minutes: guess
       }));
       added++;
@@ -4927,10 +5037,13 @@ function addScheduleChecks(results, cutRows) {
 
 /* 表示中の撮影日（"" = 全日程一覧） */
 let schedDayView = "";
+/* 当日の進行記録を表示するか（端末ごとに記憶） */
+let schedLive = false;
+try { schedLive = localStorage.getItem("tsugu_sb_live") === "1"; } catch (e) {}
 
 function schedHdrHTML() {
   return `<div class="sched-hdr">
-      <span></span><span>時刻</span><span>区分</span><span>内容・場所</span>
+      <span></span><span>時刻</span><span>区分</span><span>内容</span><span>撮影場所</span>
       <span>カット / 横縦</span><span>演者</span><span>機材</span><span>所要(分)</span><span>備考</span><span></span>
     </div>`;
 }
@@ -4950,32 +5063,103 @@ function shotChkHTML(r) {
 }
 
 function schedRowHTML(r) {
+  const cutsOK = typeHasCuts(r.type);
+  const hasBd = (r.breakdown || []).length > 0;
+  const win = locationWindow(rowLoc(r));
   return `
-    <div class="sched-row ${r.type === "other" ? "type-other" : ""} ${r.stale ? "stale" : ""}"
+    <div class="sched-row type-${r.type} ${r.stale ? "stale" : ""}"
          data-row-id="${r.id}" data-drag="schedrow">
       <span class="sr-handle" title="ドラッグで並べ替え">⠿</span>
       <span class="sched-time">${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small></span>
       <span class="sr-type">
         <select data-srow="type" aria-label="区分">
-          <option value="shoot" ${r.type === "shoot" ? "selected" : ""}>撮影</option>
-          <option value="other" ${r.type === "other" ? "selected" : ""}>その他</option>
+          ${SCHED_TYPES.map(t => `<option value="${t[0]}" ${r.type === t[0] ? "selected" : ""}>${t[1]}</option>`).join("")}
         </select>
       </span>
-      <span class="sr-label"><textarea class="sr-grow" data-srow="label" rows="1" aria-label="内容・場所"
-        placeholder="${r.type === "other" ? "移動 / 休憩 / セッティング" : "場所・内容"}">${esc(r.label)}</textarea>${
-        r.stale ? `<span class="stale-badge">絵コンテから削除済</span>` : ""}${
-        locationWindow(r.label) ? `<span class="win-badge">窓 ${esc(locationWindow(r.label))}</span>` : ""}</span>
-      <span class="sr-cuts sr-shot">
+      <span class="sr-label"><textarea class="sr-grow" data-srow="label" rows="1" aria-label="内容"
+        placeholder="${esc(TYPE_PLACEHOLDER[r.type] || "内容")}">${esc(r.label)}</textarea>${
+        r.stale ? `<span class="stale-badge">絵コンテから削除済</span>` : ""}</span>
+      <span class="sr-loc"><textarea class="sr-grow" data-srow="location" rows="1" aria-label="撮影場所"
+        title="${r.locAuto !== false ? "カットの撮影場所から自動入力（手で直すとその内容を優先します）" : "手入力の内容を優先中（空にすると自動入力に戻ります）"}"
+        placeholder="${cutsOK ? "カット選択で自動入力" : "場所"}">${esc(r.location || "")}</textarea>${
+        win ? `<span class="win-badge">窓 ${esc(win)}</span>` : ""}</span>
+      <span class="sr-cuts sr-shot">${cutsOK ? `
         <span class="sc-head">${r.cutNos && r.cutNos.length ? "#" + esc(compactNos(r.cutNos)) : "—"}</span>
         ${shotChkHTML(r)}
-        <button type="button" class="mini-btn" data-srow-act="editCuts">カット選択</button>
+        <button type="button" class="mini-btn" data-srow-act="editCuts">カット選択</button>` : "—"}
       </span>
       <span class="sr-cast sr-tags">${(r.cast || []).length ? (r.cast || []).map(v => `<span class="tag">${esc(v)}</span>`).join("") : "—"}</span>
       <span class="sr-equip sr-tags">${(r.equipment || []).length ? (r.equipment || []).map(v => `<span class="tag eq">${esc(v)}</span>`).join("") : "—"}</span>
-      <span class="sr-min"><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}" aria-label="所要時間（分）"></span>
+      <span class="sr-min"><input type="number" class="min-input" min="0" step="5" data-srow="minutes" value="${Number(r.minutes) || 0}"
+        aria-label="所要時間（分）" ${hasBd ? `readonly title="内訳の合計です。内訳で調整してください"` : ""}>${
+        hasBd ? "" : `<button type="button" class="mini-btn" data-srow-act="bdAdd" title="所要時間の内訳を入れる">＋内訳</button>`}</span>
       <span class="sr-note"><textarea class="sr-grow" data-srow="note" rows="1" placeholder="当日メモ">${esc(r.note || "")}</textarea></span>
       <span class="sr-del"><button type="button" class="icon-btn del" data-srow-act="del" aria-label="この行を削除">✕</button></span>
+      <div class="sr-extra">${bdHTML(r)}${r.type === "prep" ? eqCheckHTML(r) : ""}${schedLive ? liveHTML(r) : ""}</div>
     </div>`;
+}
+
+/* 所要時間の内訳（合計が所要時間になる） */
+function bdHTML(r) {
+  const list = r.breakdown || [];
+  if (!list.length) return "";
+  return `<div class="sx-box sx-bd"><span class="sx-title">所要時間の内訳</span>${list.map(b => `
+    <span class="bd-item" data-bd-id="${b.id}">
+      <input type="text" class="bd-label" data-bd="label" value="${esc(b.label || "")}" placeholder="項目" list="bdPresets" aria-label="内訳の項目">
+      <input type="number" class="bd-min" data-bd="min" min="0" step="5" value="${Number(b.min) || 0}" aria-label="分">分
+      <button type="button" class="bd-del" data-srow-act="bdDel" data-bd-id="${b.id}" aria-label="この内訳を削除">✕</button>
+    </span>`).join("")}
+    <button type="button" class="mini-btn" data-srow-act="bdAdd">＋項目</button>
+    <span class="bd-sum">＝ ${bdTotal(r)}分</span></div>`;
+}
+
+/* 準備行の機材チェック。その日の撮影で使う機材（無ければ登録機材すべて） */
+function prepEquipList(r) {
+  const used = [];
+  rowsOfDay(r.dayId).forEach(x => (x.equipment || []).forEach(v => { if (used.indexOf(v) < 0) used.push(v); }));
+  const master = equipNames();
+  const base = used.length ? master.filter(v => used.indexOf(v) >= 0).concat(used.filter(v => master.indexOf(v) < 0)) : master;
+  return base;
+}
+function eqCheckHTML(r) {
+  const list = prepEquipList(r);
+  if (!list.length) return `<div class="sx-box"><span class="sx-title">機材チェック</span>機材が登録されていません（絵コンテ画面の機材登録から追加できます）</div>`;
+  const n = list.filter(v => r.equipCheck && r.equipCheck[v]).length;
+  return `<div class="sx-box sx-eq"><span class="sx-title">機材チェック</span>${list.map(v => `
+    <label><input type="checkbox" data-eqchk="${esc(v)}" ${r.equipCheck && r.equipCheck[v] ? "checked" : ""}>${esc(v)}</label>`).join("")}
+    <span class="eq-count ${n === list.length ? "done" : ""}">${n}/${list.length}</span></div>`;
+}
+
+/* 当日の進行記録（実際の開始・終了と、予定とのずれ） */
+function liveDiff(r) {
+  if (r.actualEnd) return parseHM(r.actualEnd) - r._end;
+  if (r.actualStart) return parseHM(r.actualStart) - r._start;
+  return null;
+}
+function liveDiffHTML(d) {
+  if (d == null) return `<span class="live-diff even">未記録</span>`;
+  if (d === 0) return `<span class="live-diff even">予定どおり</span>`;
+  return d > 0 ? `<span class="live-diff late">${d}分 遅れ</span>` : `<span class="live-diff early">${-d}分 巻き</span>`;
+}
+function liveHTML(r) {
+  return `<div class="sx-box sx-live"><span class="sx-title">当日の記録</span>
+    実際の開始 <input type="time" data-srow="actualStart" value="${esc(r.actualStart || "")}" aria-label="実際の開始時刻">
+    <button type="button" class="mini-btn" data-srow-act="liveNow" data-k="actualStart">今</button>
+    終了 <input type="time" data-srow="actualEnd" value="${esc(r.actualEnd || "")}" aria-label="実際の終了時刻">
+    <button type="button" class="mini-btn" data-srow-act="liveNow" data-k="actualEnd">今</button>
+    <span class="live-slot">${liveDiffHTML(liveDiff(r))}</span></div>`;
+}
+/* その日の最新のずれ（最後に記録した行で判断） */
+function dayLiveDiff(dayId) {
+  let d = null;
+  rowsOfDay(dayId).forEach(r => { const x = liveDiff(r); if (x != null) d = x; });
+  return d;
+}
+function dayLiveHTML(dayId) {
+  if (!schedLive) return "";
+  const d = dayLiveDiff(dayId);
+  if (d == null) return `<span class="ds-live">当日記録：未記録</span>`;
+  return `<span class="ds-live ${d > 0 ? "late" : d < 0 ? "early" : ""}">現在 ${d === 0 ? "予定どおり" : d > 0 ? d + "分 遅れ" : -d + "分 巻き"}</span>`;
 }
 
 function daySepHTML(d, info) {
@@ -4985,6 +5169,7 @@ function daySepHTML(d, info) {
     <span class="ds-meta">${esc(d.date || "日付未設定")} ／ ${fmtHM(info.start)}〜${fmtHM(info.end)} ／ ${Math.floor(info.minutes / 60)}時間${info.minutes % 60}分 ／ ${info.rows}行</span>
     ${d.memo ? `<span class="ds-memo">${esc(d.memo)}</span>` : ""}
     <span class="ds-spare ${sp < 0 ? "ng" : ""}">予備枠 ${sp >= 0 ? fmtMin(sp) : "−" + fmtMin(-sp) + "（終業超過）"}</span>
+    ${dayLiveHTML(d.id)}
   </div>`;
 }
 const fmtMin = (m) => `${Math.floor(m / 60)}時間${m % 60}分`;
@@ -5220,8 +5405,9 @@ function openCutPicker(rowId) {
   });
   r.cast = cast;
   r.equipment = equipNames().filter(v => equip.indexOf(v) >= 0);
+  if (r.locAuto !== false) r.location = locFromCuts(nos);
   renderSchedule(); runChecks(); scheduleSave();
-  toast(nos.length ? `#${compactNos(nos)} を割り当てました（演者・機材も反映）` : "割り当てを外しました");
+  toast(nos.length ? `#${compactNos(nos)} を割り当てました（演者・機材・撮影場所も反映）` : "割り当てを外しました");
 }
 /* "1,3,5-7" のような入力を番号の配列にする */
 function parseNoList(str, max) {
@@ -5244,6 +5430,58 @@ function parseNoList(str, max) {
 $("#schedTable").addEventListener("keydown", (e) => {
   if (e.target.dataset && e.target.dataset.srow === "label" && e.key === "Enter" && !e.isComposing) e.preventDefault();
 });
+/* 当日記録のずれ表示だけを書き換える（入力中のフォーカスを保つ） */
+function updateLiveView(rowEl, r) {
+  const slot = rowEl && rowEl.querySelector(".live-slot");
+  if (slot) slot.innerHTML = liveDiffHTML(liveDiff(r));
+  const s = schedule();
+  $$("#schedTable .day-sep").forEach((el, i) => {
+    const d = s.days[i];
+    const old = el.querySelector(".ds-live");
+    if (d && old) old.outerHTML = dayLiveHTML(d.id);
+  });
+  updateSchedSummary(computeSchedTimes());
+}
+/* 内訳・機材チェック */
+$("#schedTable").addEventListener("input", (e) => {
+  const k = e.target.dataset.bd;
+  if (!k) return;
+  const rowEl = e.target.closest("[data-row-id]");
+  const r = schedule().rows.find(x => x.id === rowEl.dataset.rowId);
+  const item = r && (r.breakdown || []).find(b => b.id === e.target.closest("[data-bd-id]").dataset.bdId);
+  if (!item) return;
+  pushHistory("bd:" + item.id + ":" + k);
+  if (k === "min") {
+    item.min = Math.max(0, Number(e.target.value) || 0);
+    r.minutes = bdTotal(r);
+    const mi = rowEl.querySelector('[data-srow="minutes"]');
+    if (mi) mi.value = r.minutes;
+    const sum = rowEl.querySelector(".bd-sum");
+    if (sum) sum.textContent = "＝ " + r.minutes + "分";
+    refreshSchedTimes();
+  } else {
+    item.label = e.target.value;
+    scheduleSave();
+  }
+});
+$("#schedTable").addEventListener("change", (e) => {
+  const name = e.target.dataset.eqchk;
+  if (name == null) return;
+  const rowEl = e.target.closest("[data-row-id]");
+  const r = schedule().rows.find(x => x.id === rowEl.dataset.rowId);
+  if (!r) return;
+  pushHistory();
+  if (!r.equipCheck) r.equipCheck = {};
+  if (e.target.checked) r.equipCheck[name] = true; else delete r.equipCheck[name];
+  const box = e.target.closest(".sx-eq");
+  if (box) {
+    const all = box.querySelectorAll("input[data-eqchk]").length;
+    const n = box.querySelectorAll("input[data-eqchk]:checked").length;
+    const c = box.querySelector(".eq-count");
+    if (c) { c.textContent = n + "/" + all; c.classList.toggle("done", n === all); }
+  }
+  scheduleSave();
+});
 /* 入力（フォーカスを保つため時刻だけ更新） */
 $("#schedTable").addEventListener("input", (e) => {
   const key = e.target.dataset.srow;
@@ -5253,9 +5491,21 @@ $("#schedTable").addEventListener("input", (e) => {
   const r = schedule().rows.find(x => x.id === rowEl.dataset.rowId);
   if (!r) return;
   if (key === "minutes") {
+    if ((r.breakdown || []).length) return;   /* 内訳がある行は内訳の合計で決まる */
     pushHistory("schedmin:" + r.id);
     r.minutes = Math.max(0, Number(e.target.value) || 0);
     refreshSchedTimes();
+  } else if (key === "location") {
+    pushHistory("location:" + r.id);
+    r.location = e.target.value;
+    /* 手で直したら手入力を優先。空にしたら自動入力に戻す */
+    r.locAuto = !r.location.trim();
+    scheduleSave();
+  } else if (key === "actualStart" || key === "actualEnd") {
+    pushHistory(key + ":" + r.id);
+    r[key] = e.target.value;
+    updateLiveView(rowEl, r);
+    scheduleSave();
   } else {
     pushHistory(key + ":" + r.id);
     r[key] = e.target.value;
@@ -5269,7 +5519,13 @@ $("#schedTable").addEventListener("change", (e) => {
   if (!r) return;
   pushHistory();
   r.type = e.target.value;
+  /* 準備・移動・休憩・撤収はカットを持たない */
+  if (!typeHasCuts(r.type) && (r.cutNos || []).length) {
+    r.cutNos = []; r.shot = {};
+    toast("この区分ではカットを割り当てないため、カットの割り当てを外しました（⌘Zで戻せます）");
+  }
   renderSchedule();
+  runChecks();
   scheduleSave();
 });
 function refreshSchedTimes() {
@@ -5279,6 +5535,8 @@ function refreshSchedTimes() {
     const r = s.rows.find(x => x.id === el.dataset.rowId);
     if (!r) return;
     $(".sched-time", el).innerHTML = `${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small>`;
+    const slot = el.querySelector(".live-slot");
+    if (slot) slot.innerHTML = liveDiffHTML(liveDiff(r));
   });
   /* 日見出しの予備枠も更新 */
   $$("#schedTable .day-sep").forEach((el, i) => {
@@ -5303,6 +5561,33 @@ $("#schedTable").addEventListener("click", (e) => {
   if (!act) return;
   const rowEl = e.target.closest("[data-row-id]");
   if (act.dataset.srowAct === "editCuts") { openCutPicker(rowEl.dataset.rowId); return; }
+  const rr = schedule().rows.find(x => x.id === rowEl.dataset.rowId);
+  if (act.dataset.srowAct === "bdAdd" && rr) {
+    pushHistory();
+    if (!Array.isArray(rr.breakdown)) rr.breakdown = [];
+    /* 最初の項目には今の所要時間を入れて、合計が変わらないようにする */
+    const first = !rr.breakdown.length;
+    rr.breakdown.push({ id: uid(), label: "", min: first ? (Number(rr.minutes) || 0) : 10 });
+    rr.minutes = bdTotal(rr);
+    renderSchedule(); refreshSchedTimes();
+    const inputs = $$(`#schedTable [data-row-id="${rr.id}"] input.bd-label`);
+    if (inputs.length) inputs[inputs.length - 1].focus();
+    return;
+  }
+  if (act.dataset.srowAct === "bdDel" && rr) {
+    pushHistory();
+    rr.breakdown = (rr.breakdown || []).filter(b => b.id !== act.dataset.bdId);
+    if (rr.breakdown.length) rr.minutes = bdTotal(rr);   /* 全部消したら最後の合計を所要時間として残す */
+    renderSchedule(); refreshSchedTimes();
+    return;
+  }
+  if (act.dataset.srowAct === "liveNow" && rr) {
+    pushHistory();
+    const now = new Date();
+    rr[act.dataset.k] = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+    renderSchedule(); scheduleSave();
+    return;
+  }
   if (act.dataset.srowAct !== "del") return;
   pushHistory();
   schedule().rows = schedule().rows.filter(r => r.id !== rowEl.dataset.rowId);
@@ -5382,6 +5667,17 @@ $("#schedTable").addEventListener("dragend", () => {
   $$("#schedTable [data-row-id]").forEach(el => { el.draggable = false; });
 });
 
+/* 当日の進行記録の表示切替 */
+(function () {
+  const chk = document.getElementById("chkSchedLive");
+  if (!chk) return;
+  chk.checked = schedLive;
+  chk.addEventListener("change", () => {
+    schedLive = chk.checked;
+    try { localStorage.setItem("tsugu_sb_live", schedLive ? "1" : "0"); } catch (e) {}
+    renderSchedule();
+  });
+})();
 /* ヘッダ操作 */
 $("#btnSchedAddRow").addEventListener("click", () => {
   const s = schedule();
@@ -5456,19 +5752,23 @@ $("#btnSchedCsv").addEventListener("click", () => {
   if (!s.rows.length) { toast("香盤表が空です", true); return; }
   const info = computeSchedTimes();
   const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-  const lines = [["撮影日", "日付", "No", "開始", "終了", "所要(分)", "区分", "内容・場所",
-    "カット", "横撮影済み", "縦撮影済み", "演者", "機材", "窓の向き", "備考", "状態"].map(q).join(",")];
+  const lines = [["撮影日", "日付", "No", "開始", "終了", "所要(分)", "所要の内訳", "区分", "内容", "撮影場所",
+    "カット", "横撮影済み", "縦撮影済み", "演者", "機材", "窓の向き", "備考", "機材チェック",
+    "実際の開始", "実際の終了", "予定とのずれ(分)", "状態"].map(q).join(",")];
   s.days.forEach(d => {
     rowsOfDay(d.id).forEach((r, i) => {
       const nos = r.cutNos || [];
       const done = (k) => nos.filter(no => ((r.shot && r.shot[no]) || {})[k]).map(no => "#" + no).join(" ");
       lines.push([
         d.name, d.date || "", i + 1, fmtHM(r._start), fmtHM(r._end), Number(r.minutes) || 0,
-        r.type === "other" ? "その他" : "撮影", r.label,
+        (r.breakdown || []).map(b => `${b.label || "項目"} ${Number(b.min) || 0}分`).join("／"),
+        schedTypeName(r.type), r.label, r.location || "",
         nos.length ? "#" + compactNos(nos) : "",
         done("h"), done("v"),
         (r.cast || []).join("／"), (r.equipment || []).join("／"),
-        locationWindow(r.label), r.note || "",
+        locationWindow(rowLoc(r)), r.note || "",
+        r.type === "prep" ? prepEquipList(r).map(v => (r.equipCheck && r.equipCheck[v] ? "☑" : "☐") + v).join(" ") : "",
+        r.actualStart || "", r.actualEnd || "", liveDiff(r) == null ? "" : liveDiff(r),
         r.stale ? "絵コンテから削除済" : ""
       ].map(q).join(","));
     });
@@ -5499,6 +5799,7 @@ function dayBadgeImg(text, land) {
   const h = land ? 28 : 25, fs = land ? 16 : 14, padX = land ? 12 : 10, minW = land ? 62 : 54, k = 4;
   const font = "700 " + fs + "px " + (getComputedStyle(document.body).fontFamily || "sans-serif");
   const m = document.createElement("canvas").getContext("2d");
+  if (!m) return `<span class="ps-day">${esc(text)}</span>`;   /* canvasが使えない環境の保険 */
   m.font = font;
   const w = Math.max(minW, Math.ceil(m.measureText(text).width) + padX * 2);
   const c = document.createElement("canvas");
@@ -5532,13 +5833,14 @@ function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
         <th style="width:${o.orient === "landscape" ? 30 : 26}px">No</th>
         <th style="width:${o.orient === "landscape" ? 84 : 70}px">時刻</th>
         <th style="width:${o.orient === "landscape" ? 44 : 38}px">所要</th>
-        <th style="width:${o.orient === "landscape" ? 48 : 42}px">区分</th>
-        <th>内容・場所</th>
+        <th style="width:${o.orient === "landscape" ? 48 : 40}px">区分</th>
+        <th>内容</th>
+        <th style="width:${o.orient === "landscape" ? 104 : 74}px">撮影場所</th>
         <th style="width:${o.orient === "landscape" ? 62 : 52}px">カット</th>
         <th style="width:${o.orient === "landscape" ? 96 : 84}px">横 / 縦</th>
-        <th style="width:${o.orient === "landscape" ? 86 : 64}px">演者</th>
-        <th style="width:${o.orient === "landscape" ? 128 : 96}px">機材</th>
-        <th style="width:${o.orient === "landscape" ? 124 : 96}px">備考</th>
+        <th style="width:${o.orient === "landscape" ? 80 : 56}px">演者</th>
+        <th style="width:${o.orient === "landscape" ? 112 : 80}px">機材</th>
+        <th style="width:${o.orient === "landscape" ? 124 : 92}px">備考</th>
       </tr></thead>
       <tbody>
       ${rows.map((r, i) => {
@@ -5550,18 +5852,21 @@ function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
             }).join("")
           : "—";
         return `
-        <tr class="${r.type === "other" ? "ps-other" : ""}">
+        <tr class="${r.type === "shoot" ? "" : "ps-other ps-t-" + r.type}">
           <td class="ps-c">${i + 1}</td>
           <td class="ps-mono">${fmtHM(r._start)}<br>〜${fmtHM(r._end)}</td>
-          <td class="ps-c ps-mono">${Number(r.minutes) || 0}分</td>
-          <td class="ps-c">${r.type === "other" ? "その他" : "撮影"}</td>
-          <td>${esc(r.label)}${r.stale ? "（絵コンテから削除済）" : ""}${
-            locationWindow(r.label) ? `<br><span class="ps-win">窓: ${esc(locationWindow(r.label))}</span>` : ""}</td>
+          <td class="ps-c ps-mono">${Number(r.minutes) || 0}分${(r.breakdown || []).length
+            ? `<div class="ps-bd">${(r.breakdown || []).map(b => `${esc(b.label || "項目")} ${Number(b.min) || 0}`).join("<br>")}</div>` : ""}</td>
+          <td class="ps-c">${schedTypeName(r.type)}</td>
+          <td>${esc(r.label)}${r.stale ? "（絵コンテから削除済）" : ""}</td>
+          <td>${esc(r.location || "") || "—"}${
+            locationWindow(rowLoc(r)) ? `<br><span class="ps-win">窓: ${esc(locationWindow(rowLoc(r)))}</span>` : ""}</td>
           <td class="ps-mono">${nos.length ? "#" + esc(compactNos(nos)) : "—"}</td>
-          <td class="ps-chkcell">${chk}</td>
+          <td class="ps-chkcell">${typeHasCuts(r.type) ? chk : "—"}</td>
           <td>${esc((r.cast || []).join("・")) || "—"}</td>
           <td>${esc((r.equipment || []).join("・")) || "—"}</td>
-          <td>${esc(r.note || "")}</td>
+          <td>${esc(r.note || "")}${r.type === "prep" && prepEquipList(r).length
+            ? `<div class="ps-eq">${prepEquipList(r).map(v => `${r.equipCheck && r.equipCheck[v] ? "☑" : "☐"}${esc(v)}`).join(" ")}</div>` : ""}</td>
         </tr>`;
       }).join("")}
       </tbody>
@@ -5600,7 +5905,9 @@ function buildShareData() {
         minutes: Number(r.minutes) || 0,
         type: r.type, label: r.label,
         cutNos: r.cutNos || [], cast: r.cast || [], equipment: r.equipment || [],
-        note: r.note || "", window: locationWindow(r.label) || "",
+        note: r.note || "", window: locationWindow(rowLoc(r)) || "",
+        typeLabel: schedTypeName(r.type), location: r.location || "",
+        breakdown: (r.breakdown || []).filter(b => b.label || Number(b.min)).map(b => ({ label: b.label || "", min: Number(b.min) || 0 })),
         /* 絵コンテ画像（そのカットの絵）を添える */
         images: (r.cutNos || []).map(no => {
           const c = cuts.get(no);
@@ -5894,12 +6201,13 @@ function renderShareDay(d) {
     <div class="sv-rows">
       ${d.rows.map(r => {
         const mine = shareHighlight && (r.cast || []).indexOf(shareHighlight) >= 0;
-        if (shareHighlight && !mine && r.type !== "other") return "";
+        if (shareHighlight && !mine && r.type === "shoot") return "";
         return `
-        <div class="sv-row ${r.type === "other" ? "other" : ""}">
+        <div class="sv-row ${r.type && r.type !== "shoot" ? "other t-" + r.type : ""}">
           <div class="sv-time">${esc(r.start)}<small>〜${esc(r.end)}</small></div>
           <div class="sv-main">
-            <div class="sv-label">${esc(r.label || (r.type === "other" ? "（その他）" : "（無題）"))}</div>
+            <div class="sv-label">${r.type && r.type !== "shoot" ? `<span class="sv-type">${esc(r.typeLabel || "その他")}</span>` : ""}${esc(r.label || (r.type && r.type !== "shoot" ? "" : "（無題）"))}</div>
+            ${r.location ? `<div class="sv-loc">📍 ${esc(r.location)}</div>` : ""}
             <div class="sv-sub">
               ${(r.cast || []).length ? (r.cast || []).map(c =>
                 `<span class="tag ${shareHighlight === c ? "me" : ""}">${esc(c)}</span>`).join("") : ""}
@@ -5907,6 +6215,7 @@ function renderShareDay(d) {
               ${(r.equipment || []).length ? `<br><span style="color:var(--ink-3);font-size:var(--fs-xs)">機材: ${esc((r.equipment || []).join("・"))}</span>` : ""}
               ${r.window ? `<br><span style="color:var(--warn);font-size:var(--fs-xs)">窓: ${esc(r.window)}</span>` : ""}
             </div>
+            ${(r.breakdown || []).length ? `<div class="sv-bd">内訳：${(r.breakdown || []).map(b => `${esc(b.label || "項目")} ${Number(b.min) || 0}分`).join(" ＋ ")}</div>` : ""}
             ${r.note ? `<div class="sv-note">${esc(r.note)}</div>` : ""}
             ${(r.images || []).length ? `<div class="sv-thumbs">${(r.images || []).map(im =>
               `<figure><img src="${im.src}" alt="カット${im.no}"><figcaption>#${im.no} ${esc((im.content || "").slice(0, 14))}</figcaption></figure>`).join("")}</div>` : ""}
