@@ -1467,7 +1467,7 @@ body.share-mode .warn-banner{display:none!important}
     <div class="modal-body">
       <div class="cast-list" id="castBody"></div>
       <div class="bulk-actions">
-        <span class="hist-note">集合・解散は出演する最初と最後の時刻です。出演時間は該当行の合計で、行間の休憩・待機を除きます。</span>
+        <span class="hist-note">集合予定・終了予定は出演する最初と最後の予定時刻です。出演時間予定は該当行の合計で、行間の休憩・待機を除きます。</span>
         <span class="spacer"></span>
         <button type="button" class="btn primary" id="btnCastCopy">テキストでコピー</button>
       </div>
@@ -5016,7 +5016,7 @@ function castScheduleText() {
     if (!g.list.length) return;
     out.push(`■ ${g.day.name}${g.day.date ? `（${g.day.date}）` : ""}`);
     g.list.forEach(c => {
-      out.push(`　${c.name}：集合 ${fmtHM(c.start)} ／ 解散 ${fmtHM(c.end)} ／ 出演時間（予備含む） ${fmtMin(c.minutes)}` +
+      out.push(`　${c.name}：集合予定 ${fmtHM(c.start)} ／ 終了予定 ${fmtHM(c.end)} ／ 出演時間予定（予備含む） ${fmtMin(c.minutes)}` +
         (c.cutNos.length ? `　カット #${compactNos(c.cutNos)}` : ""));
     });
     out.push("");
@@ -5031,11 +5031,11 @@ function renderCastModal() {
     body.innerHTML = `<div class="prep-empty">演者が設定された行がありません。<br>絵コンテのカットに演者名を入れて「絵コンテから取り込み」を実行してください。</div>`;
     return;
   }
-  body.innerHTML = `<p style="font-size:var(--fs-sm)">出演時間は出演する行の合計（Vチェック・予備を含む）です。行間の休憩・待機は含みません。集合〜解散の経過時間とは異なります。</p>` + groups.map(g => `
+  body.innerHTML = `<p style="font-size:var(--fs-sm)">出演時間予定は出演する行の合計（Vチェック・予備を含む）です。行間の休憩・待機は含みません。集合予定〜終了予定の経過時間とは異なります。</p>` + groups.map(g => `
     <div class="cast-day">
       <h4>${esc(g.day.name)}${g.day.date ? `（${esc(g.day.date)}）` : ""}　<span style="font-weight:400;font-size:var(--fs-xs);color:#b8c6d4">撮影 ${fmtHM(g.info.start)}〜${fmtHM(g.info.end)}</span></h4>
       <table>
-        <thead><tr><th>出演者</th><th>集合</th><th>解散</th><th>出演時間（予備含む）</th><th>該当カット</th></tr></thead>
+        <thead><tr><th>出演者</th><th>集合予定</th><th>終了予定</th><th>出演時間予定（予備含む）</th><th>該当カット</th></tr></thead>
         <tbody>${g.list.map(c => `
           <tr>
             <td><b>${esc(c.name)}</b></td>
@@ -6366,11 +6366,11 @@ function renderShareDay(d) {
 function renderShareCast() {
   const groups = (shareData.cast || []).filter(g => g.list && g.list.length);
   if (!groups.length) return `<div class="share-loading">出演者の情報はありません。</div>`;
-  return `<p>出演時間は出演する行の合計（Vチェック・予備を含む）です。行間の休憩・待機は含みません。</p>` + groups.map(g => `
+  return `<p>出演時間予定は出演する行の合計（Vチェック・予備を含む）です。行間の休憩・待機は含みません。</p>` + groups.map(g => `
     <section class="sv-day sv-cast">
       <div class="sv-dayhead"><b>${esc(g.day)}</b></div>
       <table>
-        <thead><tr><th>出演者</th><th>集合</th><th>解散</th><th>出演時間（予備含む）</th><th>該当カット</th></tr></thead>
+        <thead><tr><th>出演者</th><th>集合予定</th><th>終了予定</th><th>出演時間予定（予備含む）</th><th>該当カット</th></tr></thead>
         <tbody>${g.list.map(c => `
           <tr ${shareHighlight === c.name ? 'style="background:var(--accent-weak)"' : ""}>
             <td><b>${esc(c.name)}</b></td>
