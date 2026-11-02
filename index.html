@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>絵コンテ制作ツール | TSUGU / ACTIVE</title>
 <style>
+.vcon-edit-row{display:grid;grid-template-columns:1fr 2fr auto;gap:12px;align-items:end;padding:14px 0;border-bottom:1px solid var(--line)}
+.vcon-edit-row label{display:grid;gap:6px}.vcon-edit-row input{width:100%;min-width:0;padding:9px;border:1px solid var(--line-strong)}
+.sv-vcon{background:white;border:1px solid var(--line-strong);padding:16px;margin-bottom:24px}.sv-vcon h2{font-size:18px;margin:0 0 16px}.sv-video{position:relative;aspect-ratio:16/9;background:#111}.sv-video iframe{position:absolute;width:100%;height:100%;inset:0;border:0}
+@media(max-width:680px){.vcon-edit-row{grid-template-columns:1fr}}
 .sv-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-bottom:24px}
 .sv-board-card{background:#fff;border:1px solid #aeb7c0;overflow:hidden;break-inside:avoid}
 .sv-board-card header{display:flex;justify-content:space-between;gap:12px;background:#1b2430;color:#fff;padding:12px 16px}
@@ -1173,6 +1177,7 @@ body.share-mode .warn-banner{display:none!important}
       <button type="button" class="btn" id="btnHistory">履歴</button>
       <button type="button" class="btn" id="btnHelp" aria-haspopup="dialog">？ 使い方と注意事項</button>
       <button type="button" class="btn" id="btnProjects">プロジェクト</button>
+      <button type="button" class="btn" id="btnVcon" aria-haspopup="dialog">Vコン設定</button>
       <button type="button" class="btn" id="btnCheck">チェック <span class="badge zero" id="checkBadge">0</span></button>
       <button type="button" class="btn primary" id="btnAI">AI下書き</button>
       <div class="menu-wrap">
@@ -1462,6 +1467,16 @@ body.share-mode .warn-banner{display:none!important}
       </div>
       <div class="help-step"><span class="hs-no">4</span><span>内容を直したら、<b>1と2をもう一度</b>行ってください（同じファイル名で上書き）。URLはそのままで中身だけ新しくなります。</span></div>
       <div class="help-note">共有ページは<b>閲覧専用</b>です。演者が内容を書き換えることはできません。リポジトリが公開設定のため、<b>URLを知っている人は誰でも見られます</b>。個人情報や社外秘の記載にはご注意ください。</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="vconBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="vconTitle">
+    <div class="modal-head"><h2 id="vconTitle">Vコン設定</h2><button type="button" class="icon-btn" id="btnVconClose" aria-label="閉じる">✕</button></div>
+    <div class="modal-body"><p>YouTubeのURLを登録すると、共有画面の「Vコン」で再生できます。動画は複数登録できます。</p>
+      <div id="vconEditor"></div><p id="vconError" role="alert" style="color:var(--err)"></p>
+      <div class="bulk-actions"><button type="button" class="btn" id="btnVconAdd">＋ 動画を追加</button><span class="spacer"></span><button type="button" class="btn primary" id="btnVconSave">保存して共有に反映</button></div>
     </div>
   </div>
 </div>
@@ -3830,7 +3845,7 @@ async function deleteProject(id) {
     let opened = false;
     for (const p of loadIndex()) { if (await loadProject(p.id)) { opened = true; break; } }
     if (!opened) {
-      state = { meta: { ...state.meta, title: "", client: "", author: "", date: new Date().toISOString().slice(0, 10) }, scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])] };
+      state = { meta: { ...state.meta, vcons: [], title: "", client: "", author: "", date: new Date().toISOString().slice(0, 10) }, scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])] };
       currentProjectId = uid();
       clearHistory();
       await persistCurrentProject();
@@ -3844,7 +3859,7 @@ async function deleteProject(id) {
 
 $("#btnProjNew").addEventListener("click", () => {
   createProjectFromState({
-    meta: { ...state.meta, title: "", client: state.meta.client, author: state.meta.author, date: new Date().toISOString().slice(0, 10) },
+    meta: { ...state.meta, vcons: [], title: "", client: state.meta.client, author: state.meta.author, date: new Date().toISOString().slice(0, 10) },
     scenes: [newScene("シーン 1", [newCut(), newCut(), newCut()])]
   });
   syncMetaInputs(); render(); renderProjectList(); closeProjModal();
@@ -4456,7 +4471,7 @@ $("#jsonFileInput").addEventListener("change", (e) => {
     try {
       const data = JSON.parse(reader.result);
       if (!data || !Array.isArray(data.scenes) || !data.meta) throw new Error("このツールの保存形式ではありません。");
-      const loaded = { meta: { ...state.meta, ...data.meta }, scenes: data.scenes };
+      const loaded = { meta: { ...state.meta, vcons: [], ...data.meta }, scenes: data.scenes };
       if (jsonLoadMode === "import") {
         /* 新規プロジェクトとして取込（現在の作業は保持） */
         createProjectFromState(loaded, { silent: true });
@@ -6043,6 +6058,7 @@ function buildShareData() {
     client: state.meta.client || "",
     author: state.meta.author || "",
     setup: s.setup || "",
+    vcons: (state.meta.vcons || []).map(v => ({ title: v.title || "Vコン", url: v.url || "" })),
     storyboard: flattenCuts().map(r => ({
       no: r.no, scene: r.scene.name || "", image: r.cut.image || "",
       content: r.cut.content || "", dialog: r.cut.dialog || "", telop: r.cut.telop || "",
@@ -6398,6 +6414,53 @@ function renderShareCast() {
     </section>`).join("");
 }
 
+function youtubeVideoId(value) {
+  try {
+    const url = new URL(String(value).trim());
+    if (url.protocol !== "https:" || url.username || url.password || url.port) return "";
+    const host = url.hostname.toLowerCase();
+    let id = "";
+    if (host === "youtu.be") id = url.pathname.split("/")[1];
+    else if (["youtube.com", "www.youtube.com", "m.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
+      const parts = url.pathname.split("/").filter(Boolean);
+      id = parts[0] === "watch" ? url.searchParams.get("v") : ["embed", "shorts", "live"].includes(parts[0]) ? parts[1] : "";
+    }
+    return /^[A-Za-z0-9_-]{11}$/.test(id || "") ? id : "";
+  } catch { return ""; }
+}
+function appendVconEditorRow(video = {}) {
+  const row = document.createElement("div"); row.className = "vcon-edit-row";
+  row.innerHTML = `<label>動画名<input type="text" data-vcon="title" aria-label="Vコンの動画名" value="${esc(video.title || "")}" placeholder="例：Vコン 確認版C"></label><label>YouTube URL<input type="url" data-vcon="url" aria-label="VコンのURL" value="${esc(video.url || "")}" placeholder="https://youtu.be/..."></label><button type="button" class="btn" aria-label="このVコンを削除">削除</button>`;
+  row.querySelector("button").addEventListener("click", () => row.remove());
+  $("#vconEditor").append(row);
+}
+$("#btnVcon").addEventListener("click", () => {
+  $("#vconEditor").innerHTML = ""; $("#vconError").textContent = "";
+  (state.meta.vcons || []).forEach(appendVconEditorRow);
+  if (!(state.meta.vcons || []).length) appendVconEditorRow();
+  $("#vconBackdrop").classList.add("open");
+});
+$("#btnVconClose").addEventListener("click", () => $("#vconBackdrop").classList.remove("open"));
+$("#btnVconAdd").addEventListener("click", () => appendVconEditorRow());
+$("#btnVconSave").addEventListener("click", () => {
+  const videos = [...$("#vconEditor").querySelectorAll(".vcon-edit-row")].map((row,i) => ({
+    title: row.querySelector('[data-vcon="title"]').value.trim() || `Vコン ${i + 1}`,
+    url: row.querySelector('[data-vcon="url"]').value.trim()
+  }));
+  const bad = videos.findIndex(v => !youtubeVideoId(v.url));
+  if (bad >= 0) { $("#vconError").textContent = `${bad + 1}本目に有効なYouTube動画のURLを入力してください。不要な行は削除できます。`; return; }
+  pushHistory(); state.meta.vcons = videos; scheduleSave();
+  $("#vconBackdrop").classList.remove("open"); toast("Vコン設定を保存しました");
+});
+function renderShareVcons() {
+  const videos = (shareData.vcons || []).filter(v => youtubeVideoId(v.url));
+  if (!videos.length) return `<div class="share-loading">Vコンはまだ登録されていません。</div>`;
+  return `<div class="sv-vcons">${videos.map((v,i) => {
+    const id = youtubeVideoId(v.url);
+    return `<section class="sv-vcon"><h2>${esc(v.title || `Vコン ${i + 1}`)}</h2><div class="sv-video"><iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0" title="${esc(v.title || `Vコン ${i + 1}`)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><p><a href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">YouTubeで見る ↗</a></p></section>`;
+  }).join("")}</div>`;
+}
+
 function renderShareStoryboard() {
   const cuts = shareData.storyboard || [];
   if (!cuts.length) return `<div class="share-loading">絵コンテはまだ共有されていません。編集者の同期後に自動で表示されます。</div>`;
@@ -6411,7 +6474,7 @@ function renderShareStoryboard() {
 }
 function renderShareView() {
   const d = shareData;
-  $("#shareTitle").textContent = `${shareTab === "__board" ? "絵コンテ" : "香盤表"} — ${d.title}`;
+  $("#shareTitle").textContent = `${shareTab === "__board" ? "絵コンテ" : shareTab === "__vcon" ? "Vコン" : "香盤表"} — ${d.title}`;
   $("#shareSub").textContent =
     [d.client, d.author].filter(Boolean).join(" / ") +
     `　更新 ${new Date(d.updatedAt).toLocaleString("ja-JP")}`;
@@ -6420,12 +6483,19 @@ function renderShareView() {
     `<button type="button" data-shtab="" aria-selected="${shareTab === "" ? "true" : "false"}">全日程</button>` +
     d.days.map(x => `<button type="button" data-shtab="${esc(x.name)}" aria-selected="${shareTab === x.name ? "true" : "false"}">${esc(x.name)}</button>`).join("") +
     `<button type="button" data-shtab="__cast" aria-selected="${shareTab === "__cast" ? "true" : "false"}">出演者の時間</button>` +
-    `<button type="button" data-shtab="__board" aria-selected="${shareTab === "__board" ? "true" : "false"}">絵コンテ</button>`;
+    `<button type="button" data-shtab="__board" aria-selected="${shareTab === "__board" ? "true" : "false"}">絵コンテ</button>` +
+    `<button type="button" data-shtab="__vcon" aria-selected="${shareTab === "__vcon" ? "true" : "false"}">Vコン</button>`;
 
   const body = $("#shareBody");
-  if (shareTab === "__board") {
+  if (shareTab === "__vcon") {
+    const signature = JSON.stringify(d.vcons || []);
+    if (body.dataset.vconSignature !== signature || !body.querySelector('.sv-vcons')) body.innerHTML = renderShareVcons();
+    body.dataset.vconSignature = signature;
+  } else if (shareTab === "__board") {
+    delete body.dataset.vconSignature;
     body.innerHTML = renderShareStoryboard();
   } else if (shareTab === "__cast") {
+    delete body.dataset.vconSignature;
     body.innerHTML = renderShareCast();
   } else {
     const days = shareTab ? d.days.filter(x => x.name === shareTab) : d.days;
