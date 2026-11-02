@@ -1710,7 +1710,7 @@ body.share-mode .warn-banner{display:none!important}
    ============================================================ */
 
 /* ---------------- アプリ情報 ---------------- */
-const APP_UPDATED = "2026-10-30";   /* 機能を更新したらこの日付を書き換える */
+const APP_UPDATED = "2026-11-02";   /* 機能を更新したらこの日付を書き換える */
 
 /* ---------------- state ---------------- */
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -1840,6 +1840,7 @@ function projectSummary() {
 function persistCurrentProject() {
   if (!currentProjectId) return Promise.resolve(false);
   const id = currentProjectId;
+  window.dispatchEvent(new Event("ekonte-local-save"));
   const payload = compactState(state);
 
   /* 一覧メタは同期的に更新（保存失敗しても一覧表示は正しく保つ） */
@@ -6418,7 +6419,19 @@ async function bootShareMode(file) {
   }
 }
 
+window.ekonteCloud = {
+  projectId: () => currentProjectId,
+  shareData: () => buildShareData(),
+  show: data => { shareData = data; shareHighlight = shareParam("me"); renderShareView(); },
+  clear: () => { shareData = null; $("#shareTabs").innerHTML = ""; $("#shareTitle").textContent = "香盤表"; $("#shareSub").textContent = ""; $("#shareFoot").textContent = ""; }
+};
 (async function init() {
+  if (new URLSearchParams(location.search).has("live")) {
+    document.body.classList.add("share-mode");
+    $("#shareView").hidden = false;
+    $("#shareBody").textContent = "香盤表を読み込んでいます…";
+    return;
+  }
   /* 共有URLで開かれた場合は、閲覧専用ページとして動かす */
   const shareFile = shareParam("share");
   if (shareFile && /^[\w.\-]+\.json$/.test(shareFile)) {
@@ -6464,6 +6477,153 @@ async function bootShareMode(file) {
   if (restored) toast("前回のプロジェクトを復元しました");
   if (moved) toast(`${moved}件のプロジェクトをIndexedDBへ移行しました`);
 })();
+</script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+const config = {
+  apiKey: 'AIzaSyCcyWo51fx5-IQo3buBjUo_UWkIm0C43Ok',
+  authDomain: 'ekonte-f5e80.firebaseapp.com',
+  projectId: 'ekonte-f5e80',
+  storageBucket: 'ekonte-f5e80.firebasestorage.app',
+  messagingSenderId: '513188683057',
+  appId: '1:513188683057:web:a80ec3f85bbda00920a410'
+};
+const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
+const ownerEmail = 'k.itou2.active@gmail.com';
+const bridge = window.ekonteCloud;
+const shareId = new URLSearchParams(location.search).get('live');
+const owner = () => auth.currentUser?.emailVerified && auth.currentUser.email === ownerEmail;
+const stateKey = id => 'ekonte-live:' + id;
+const queueKey = id => 'ekonte-live-pending:' + id;
+function read(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+function errorMessage(error) {
+  if (error?.code?.includes('resource-exhausted')) return '無料枠の上限です。同期は停止中です。';
+  if (error?.code?.includes('permission-denied')) return '権限を確認してください。端末内の保存は維持されています。';
+  if (error?.code?.includes('unauthorized-domain')) return 'ログインの承認済みドメインを確認してください。';
+  return '同期できません。通信・ログイン設定を確認してください。';
+}
+if (new URLSearchParams(location.search).has('share')) {
+  // 従来のJSON共有は既存の表示処理を使用する。
+} else if (new URLSearchParams(location.search).has('live')) {
+  document.body.classList.add('share-mode');
+  document.getElementById('shareView').hidden = false;
+  const body = document.getElementById('shareBody');
+  if (!/^[a-f0-9]{48}$/.test(shareId)) body.textContent = '共有URLが正しくありません。';
+  else onSnapshot(doc(db, 'scheduleShares', shareId), snap => {
+    if (!snap.exists() || !snap.data().published) { bridge.clear(); body.textContent = '共有は停止されています。'; return; }
+    try {
+      const data = JSON.parse(snap.data().payload);
+      if (!Array.isArray(data.days)) throw Error('format');
+      bridge.show(data);
+      document.getElementById('shareFoot').textContent = '閲覧専用・リアルタイム同期中。更新 ' + new Date(data.updatedAt).toLocaleString('ja-JP');
+    } catch { body.textContent = '共有データを表示できません。'; }
+  }, error => { bridge.clear(); body.textContent = '共有が停止されたか、URLが無効です。'; });
+} else {
+  const panel = document.createElement('div');
+  panel.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 16px;background:white;border-bottom:1px solid #d7dce1';
+  panel.innerHTML = '<button class="btn" id="cloudLogin">共有用ログイン</button><button class="btn primary" id="cloudStart">自動共有を開始</button><button class="btn" id="cloudCopy">共有URLをコピー</button><button class="btn" id="cloudStop">共有を停止</button><span id="cloudStatus" role="status"></span>';
+  document.querySelector('.topbar').append(panel);
+  const status = panel.querySelector('#cloudStatus');
+  const show = value => { status.textContent = value; };
+  let timer, sending = false, again = false, stopping = false;
+  let lastProject = null;
+  const current = () => bridge.projectId();
+  function refresh() {
+    const mapping = read(stateKey(current()));
+    panel.querySelector('#cloudLogin').textContent = auth.currentUser ? 'ログアウト' : '共有用ログイン';
+    panel.querySelector('#cloudStart').disabled = !owner() || Boolean(mapping?.enabled);
+    panel.querySelector('#cloudCopy').disabled = !mapping?.enabled;
+    panel.querySelector('#cloudStop').disabled = !owner() || !mapping?.enabled;
+    if (!mapping?.enabled) show(owner() ? '未共有（端末内に保存）' : '共有は編集者のGoogleログイン後に開始できます');
+    else if (!owner()) show('共有設定あり・同期には編集者ログインが必要');
+  }
+  function makePayload() {
+    const data = bridge.shareData();
+    for (const day of data.days) for (const row of day.rows) row.images = [];
+    return JSON.stringify(data);
+  }
+  function enqueue() {
+    const id = current(), mapping = read(stateKey(id));
+    if (stopping || !id || !mapping?.enabled) { refresh(); return; }
+    try {
+      const payload = makePayload();
+      if (new TextEncoder().encode(payload).length > 850000) throw Error('size');
+      write(queueKey(id), { share: mapping.share, payload });
+      show('共有へ保存待ち…');
+      clearTimeout(timer); timer = setTimeout(flush, 1500);
+    } catch { show('共有データが大きすぎるか、端末に保存できません。同期は停止中です。'); }
+  }
+  async function flush() {
+    if (sending) { again = true; return; }
+    const id = current(), mapping = read(stateKey(id)), queued = read(queueKey(id));
+    if (stopping || !mapping?.enabled || !queued || queued.share !== mapping.share) return;
+    if (!owner()) { show('端末に保存済み・共有の更新には編集者ログインが必要'); return; }
+    if (!navigator.onLine) { show('端末に保存済み・オンライン復帰待ち'); return; }
+    sending = true;
+    try {
+      show('共有へ保存中…');
+      await setDoc(doc(db, 'scheduleShares', queued.share), { payload: queued.payload, published: true, updatedAt: serverTimestamp() });
+      if (read(queueKey(id))?.payload === queued.payload) localStorage.removeItem(queueKey(id));
+      if (current() === id) show('共有へ保存済み ' + new Date().toLocaleTimeString('ja-JP'));
+    } catch (error) { show(errorMessage(error)); }
+    finally { sending = false; if (again) { again = false; flush(); } refreshButtonsOnly(); }
+  }
+  function refreshButtonsOnly() {
+    const mapping = read(stateKey(current()));
+    panel.querySelector('#cloudStart').disabled = !owner() || Boolean(mapping?.enabled);
+    panel.querySelector('#cloudCopy').disabled = !mapping?.enabled;
+    panel.querySelector('#cloudStop').disabled = !owner() || !mapping?.enabled;
+  }
+  panel.querySelector('#cloudLogin').onclick = async () => {
+    try {
+      if (auth.currentUser) await signOut(auth);
+      else {
+        const provider = new GoogleAuthProvider(); provider.setCustomParameters({ prompt: 'select_account' });
+        const result = await signInWithPopup(auth, provider);
+        if (!result.user.emailVerified || result.user.email !== ownerEmail) { await signOut(auth); show('編集者のGoogleアカウントを選んでください'); }
+      }
+    } catch (error) { show(errorMessage(error)); }
+  };
+  panel.querySelector('#cloudStart').onclick = () => {
+    if (!owner() || !current()) return;
+    const bytes = crypto.getRandomValues(new Uint8Array(24));
+    const share = Array.from(bytes, n => n.toString(16).padStart(2, '0')).join('');
+    write(stateKey(current()), { share, enabled: true });
+    refreshButtonsOnly(); enqueue();
+  };
+  panel.querySelector('#cloudCopy').onclick = async () => {
+    const mapping = read(stateKey(current()));
+    if (!mapping?.enabled) return;
+    const url = new URL(location.pathname, location.origin); url.searchParams.set('live', mapping.share);
+    try { await navigator.clipboard.writeText(url.href); show('共有URLをコピーしました'); }
+    catch { show('共有URL：' + url.href); }
+  };
+  panel.querySelector('#cloudStop').onclick = async () => {
+    if (!owner()) return;
+    const id = current(), mapping = read(stateKey(id)); if (!mapping?.enabled) return;
+    clearTimeout(timer);
+    // 待機中の書込みを先に終え、停止操作の後に再公開されるのを防ぐ。
+    if (sending) { show('保存完了後にもう一度「共有を停止」を押してください'); return; }
+    stopping = true;
+    try {
+      const queued = read(queueKey(id));
+      const payload = queued?.payload || makePayload();
+      await setDoc(doc(db, 'scheduleShares', mapping.share), { payload, published: false, updatedAt: serverTimestamp() });
+      write(stateKey(id), { ...mapping, enabled: false }); localStorage.removeItem(queueKey(id));
+      refreshButtonsOnly(); show('共有を停止しました');
+    } catch (error) { show(errorMessage(error)); }
+    finally { stopping = false; refreshButtonsOnly(); }
+  };
+  onAuthStateChanged(auth, () => { refresh(); if (owner()) flush(); });
+  window.addEventListener('ekonte-local-save', enqueue);
+  window.addEventListener('online', flush);
+  setInterval(() => { if (lastProject !== current()) { lastProject = current(); refresh(); if (owner()) flush(); } }, 1000);
+  refresh();
+}
+
 </script>
 </body>
 </html>
