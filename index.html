@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>絵コンテ制作ツール | TSUGU / ACTIVE</title>
+<style>
+.sv-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-bottom:24px}
+.sv-board-card{background:#fff;border:1px solid #aeb7c0;overflow:hidden;break-inside:avoid}
+.sv-board-card header{display:flex;justify-content:space-between;gap:12px;background:#1b2430;color:#fff;padding:12px 16px}
+.sv-board-card img{width:100%;height:auto;max-height:420px;object-fit:contain;display:block;background:#f4f5f6}
+.sv-board-empty{padding:50px;text-align:center;color:#8a94a0;background:#f4f5f6}
+.sv-board-card dl{padding:12px 16px;margin:0}.sv-board-card dt{font-size:12px;color:#4b5563;margin-top:10px;font-weight:bold}.sv-board-card dd{margin:4px 0 12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}
+@media(max-width:680px){.sv-board{grid-template-columns:1fr}}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <style>
@@ -6034,6 +6043,12 @@ function buildShareData() {
     client: state.meta.client || "",
     author: state.meta.author || "",
     setup: s.setup || "",
+    storyboard: flattenCuts().map(r => ({
+      no: r.no, scene: r.scene.name || "", image: r.cut.image || "",
+      content: r.cut.content || "", dialog: r.cut.dialog || "", telop: r.cut.telop || "",
+      camera: r.cut.camera || "", sec: Number(r.cut.sec) || 0,
+      cast: r.cut.cast || "", location: r.cut.location || ""
+    })),
     days: s.days.map(d => ({
       name: d.name, date: d.date, memo: d.memo,
       start: fmtHM(info[d.id].start), end: fmtHM(info[d.id].end),
@@ -6383,9 +6398,20 @@ function renderShareCast() {
     </section>`).join("");
 }
 
+function renderShareStoryboard() {
+  const cuts = shareData.storyboard || [];
+  if (!cuts.length) return `<div class="share-loading">絵コンテはまだ共有されていません。編集者の同期後に自動で表示されます。</div>`;
+  return `<div class="sv-board">${cuts.map(c => {
+    const image = /^data:image\/(?:jpeg|png|webp);base64,/.test(c.image || "") ? c.image : "";
+    const fields = [["カット内容", c.content], ["セリフ・ナレーション", c.dialog], ["テロップ", c.telop], ["カメラワーク", c.camera], ["出演者", c.cast], ["撮影場所", c.location]].filter(([, value]) => value);
+    return `<article class="sv-board-card"><header><b>#${Number(c.no) || ""} ${esc(c.scene || "")}</b><span>${Number(c.sec) || 0}秒</span></header>
+      ${image ? `<img src="${esc(image)}" alt="カット${Number(c.no)}の絵コンテ" loading="lazy">` : `<div class="sv-board-empty">画像未登録</div>`}
+      <dl>${fields.map(([label,value]) => `<dt>${label}</dt><dd>${esc(value)}</dd>`).join("")}</dl></article>`;
+  }).join("")}</div>`;
+}
 function renderShareView() {
   const d = shareData;
-  $("#shareTitle").textContent = `香盤表 — ${d.title}`;
+  $("#shareTitle").textContent = `${shareTab === "__board" ? "絵コンテ" : "香盤表"} — ${d.title}`;
   $("#shareSub").textContent =
     [d.client, d.author].filter(Boolean).join(" / ") +
     `　更新 ${new Date(d.updatedAt).toLocaleString("ja-JP")}`;
@@ -6393,10 +6419,13 @@ function renderShareView() {
   $("#shareTabs").innerHTML =
     `<button type="button" data-shtab="" aria-selected="${shareTab === "" ? "true" : "false"}">全日程</button>` +
     d.days.map(x => `<button type="button" data-shtab="${esc(x.name)}" aria-selected="${shareTab === x.name ? "true" : "false"}">${esc(x.name)}</button>`).join("") +
-    `<button type="button" data-shtab="__cast" aria-selected="${shareTab === "__cast" ? "true" : "false"}">出演者の時間</button>`;
+    `<button type="button" data-shtab="__cast" aria-selected="${shareTab === "__cast" ? "true" : "false"}">出演者の時間</button>` +
+    `<button type="button" data-shtab="__board" aria-selected="${shareTab === "__board" ? "true" : "false"}">絵コンテ</button>`;
 
   const body = $("#shareBody");
-  if (shareTab === "__cast") {
+  if (shareTab === "__board") {
+    body.innerHTML = renderShareStoryboard();
+  } else if (shareTab === "__cast") {
     body.innerHTML = renderShareCast();
   } else {
     const days = shareTab ? d.days.filter(x => x.name === shareTab) : d.days;
@@ -6561,21 +6590,60 @@ if (new URLSearchParams(location.search).has('share')) {
     if (!mapping?.enabled) show(owner() ? '未共有（端末内に保存）' : '共有は編集者のGoogleログイン後に開始できます');
     else if (!owner()) show('共有設定あり・同期には編集者ログインが必要');
   }
-  function makePayload() {
-    const data = bridge.shareData();
+  const imageCache = new Map();
+  let payloadRevision = 0;
+  function shareImage(src, limit) {
+    const key = limit + ":" + src;
+    if (imageCache.has(key)) return imageCache.get(key);
+    if (imageCache.size > 64) imageCache.clear();
+    const result = new Promise((resolve, reject) => {
+      if (!src) { resolve(""); return; }
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          let maxEdge = 640, quality = 0.78, output;
+          for (let attempt = 0; attempt < 14; attempt++) {
+            const scale = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight));
+            canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+            context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(img, 0, 0, canvas.width, canvas.height);
+            output = canvas.toDataURL('image/jpeg', quality);
+            if (output.length <= limit) { resolve(output); return; }
+            maxEdge = Math.max(48, Math.round(maxEdge * 0.8)); quality = Math.max(0.45, quality - 0.06);
+          }
+          reject(Error('image-size'));
+        } catch (error) { reject(error); }
+      };
+      img.onerror = () => reject(Error('image-load'));
+      img.src = src;
+    });
+    imageCache.set(key, result);
+    result.catch(() => imageCache.delete(key));
+    return result;
+  }
+  async function makePayload(data = bridge.shareData()) {
     for (const day of data.days) for (const row of day.rows) row.images = [];
+    const count = (data.storyboard || []).filter(c => c.image).length;
+    const limit = Math.max(1000, Math.floor(620000 / Math.max(1, count)));
+    await Promise.all((data.storyboard || []).map(async c => { c.image = await shareImage(c.image, limit); }));
     return JSON.stringify(data);
   }
-  function enqueue() {
+  async function enqueue() {
+    const revision = ++payloadRevision;
     const id = current(), mapping = read(stateKey(id));
     if (stopping || !id || !mapping?.enabled) { refresh(); return; }
     try {
-      const payload = makePayload();
+      show('絵コンテ・香盤表を共有用に準備中…');
+      const payload = await makePayload();
+      if (revision !== payloadRevision || current() !== id || stopping || !read(stateKey(id))?.enabled) return;
       if (new TextEncoder().encode(payload).length > 850000) throw Error('size');
       write(queueKey(id), { share: mapping.share, payload });
       show('共有へ保存待ち…');
       clearTimeout(timer); timer = setTimeout(flush, 1500);
-    } catch { show('共有データが大きすぎるか、端末に保存できません。同期は停止中です。'); }
+    } catch { show('画像の読み込み・容量を確認してください。端末内の保存は維持されています。'); }
   }
   async function flush() {
     if (sending) { again = true; return; }
@@ -6633,7 +6701,7 @@ if (new URLSearchParams(location.search).has('share')) {
     stopping = true;
     try {
       const queued = read(queueKey(id));
-      const payload = queued?.payload || makePayload();
+      const payload = queued?.payload || await makePayload();
       await setDoc(doc(db, 'scheduleShares', mapping.share), { payload, published: false, updatedAt: serverTimestamp() });
       write(stateKey(id), { ...mapping, enabled: false }); localStorage.removeItem(queueKey(id));
       refreshButtonsOnly(); show('共有を停止しました');
