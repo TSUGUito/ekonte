@@ -4981,6 +4981,11 @@ function castActiveMinutes(rows) {
   }
   return total + (start === null ? 0 : end - start);
 }
+function individualCastNames(values) {
+  return [...new Set((values || []).flatMap(value => String(value).split(/[、,，／/\r\n]+/))
+    .map(name => name.trim().replace(/(?:滝本|瀧本)\s*さん/g, "瀧本さん").replace(/^北岡\s*さん$/, "北岡さん"))
+    .filter(Boolean))];
+}
 function castSchedule() {
   const s = schedule();
   const info = computeSchedTimes();
@@ -4988,7 +4993,7 @@ function castSchedule() {
     const rows = rowsOfDay(d.id).filter(r => !r.stale && (r.cast || []).length);
     const byCast = new Map();
     rows.forEach(r => {
-      (r.cast || []).forEach(c => {
+      individualCastNames(r.cast).forEach(c => {
         if (!byCast.has(c)) byCast.set(c, { name: c, start: r._start, end: r._end, rows: [] });
         const g = byCast.get(c);
         g.start = Math.min(g.start, r._start);
