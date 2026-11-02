@@ -5913,6 +5913,29 @@ function dayBadgeImg(text, land) {
   return `<img class="ps-day-img" alt="${esc(text)}" src="${c.toDataURL("image/png")}" style="width:${w}px;height:${h}px">`;
 }
 
+/* 区分ラベルも画像化し、html2canvasの日本語ベースラインずれを回避 */
+function schedTypeBadgeImg(type) {
+  const label = schedTypeName(type);
+  const colors = { prep: ["#c98a00", "#8a5d00"], break: ["#2e8b57", "#1f6b42"], move: ["#6b7c8f", "#4b5866"], strike: ["#7a4fa0", "#5d3a7c"], shoot: ["#0f4c81", "#0f4c81"] };
+  const [border, ink] = colors[type] || ["#9aa5b1", "#1b2430"];
+  const scale = 4, height = 22, size = 12;
+  const canvas = document.createElement("canvas");
+  let ctx = canvas.getContext("2d");
+  if (!ctx) return `<span class="ps-type">${esc(label)}</span>`;
+  const font = `700 ${size}px ${getComputedStyle(document.body).fontFamily || "sans-serif"}`;
+  ctx.font = font;
+  const width = Math.ceil(ctx.measureText(label).width) + 12;
+  canvas.width = width * scale; canvas.height = height * scale;
+  ctx = canvas.getContext("2d"); ctx.scale(scale, scale);
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = border; ctx.lineWidth = 1;
+  ctx.strokeRect(.5, .5, width - 1, height - 1);
+  ctx.font = font; ctx.fillStyle = ink;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(label, width / 2, height / 2);
+  return `<img class="ps-type-img" alt="${esc(label)}" src="${canvas.toDataURL("image/png")}" style="display:block;width:${width}px;height:${height}px;flex:none">`;
+}
+
 function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
   const s = schedule();
   const o = opt || {};
@@ -5954,7 +5977,7 @@ function schedPdfPageHTML(day, rows, pageNo, pageTotal, info, opt) {
         <tr>
           <td class="ps-c ps-no"${rs}>${i + 1}</td>
           <td class="ps-timecell"${rs}><div class="ps-mono ps-time">${fmtHM(r._start)}〜${fmtHM(r._end)}</div>
-            <div class="ps-dur"><span class="ps-type">${schedTypeName(r.type)}</span><span class="ps-mono">${Number(r.minutes) || 0}分</span></div></td>
+            <div class="ps-dur">${schedTypeBadgeImg(r.type)}<span class="ps-mono">${Number(r.minutes) || 0}分</span></div></td>
           <td class="ps-label">${esc(r.label)}${r.stale ? "（絵コンテから削除済）" : ""}</td>
           <td>${esc(r.location || "") || "—"}${win ? `<br><span class="ps-win">窓: ${esc(win)}</span>` : ""}</td>
           <td class="ps-chkcell">${typeHasCuts(r.type) && nos.length ? chk : "—"}</td>
