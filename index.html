@@ -6524,7 +6524,7 @@ if (new URLSearchParams(location.search).has('share')) {
 } else {
   const panel = document.createElement('div');
   panel.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 16px;background:white;border-bottom:1px solid #d7dce1';
-  panel.innerHTML = '<button class="btn" id="cloudLogin">共有用ログイン</button><button class="btn primary" id="cloudStart">自動共有を開始</button><button class="btn" id="cloudCopy">共有URLをコピー</button><button class="btn" id="cloudStop">共有を停止</button><span id="cloudStatus" role="status"></span>';
+  panel.innerHTML = '<button class="btn" id="cloudLogin">共有用ログイン</button><button class="btn primary" id="cloudStart">自動共有を開始</button><button class="btn" id="cloudCopy">共有URLをコピー</button><button class="btn" id="cloudStop">共有を停止</button><a id="cloudLink" target="_blank" rel="noopener" hidden>共有画面を開く</a><span id="cloudStatus" role="status"></span>';
   document.querySelector('.topbar').append(panel);
   const status = panel.querySelector('#cloudStatus');
   const show = value => { status.textContent = value; };
@@ -6536,6 +6536,8 @@ if (new URLSearchParams(location.search).has('share')) {
     panel.querySelector('#cloudLogin').textContent = auth.currentUser ? 'ログアウト' : '共有用ログイン';
     panel.querySelector('#cloudStart').disabled = !owner() || Boolean(mapping?.enabled);
     panel.querySelector('#cloudCopy').disabled = !mapping?.enabled;
+    const link = panel.querySelector('#cloudLink'); link.hidden = !mapping?.enabled;
+    if (mapping?.enabled) { const url = new URL(location.pathname, location.origin); url.searchParams.set('live', mapping.share); link.href = url.href; }
     panel.querySelector('#cloudStop').disabled = !owner() || !mapping?.enabled;
     if (!mapping?.enabled) show(owner() ? '未共有（端末内に保存）' : '共有は編集者のGoogleログイン後に開始できます');
     else if (!owner()) show('共有設定あり・同期には編集者ログインが必要');
@@ -6575,6 +6577,8 @@ if (new URLSearchParams(location.search).has('share')) {
     const mapping = read(stateKey(current()));
     panel.querySelector('#cloudStart').disabled = !owner() || Boolean(mapping?.enabled);
     panel.querySelector('#cloudCopy').disabled = !mapping?.enabled;
+    const link = panel.querySelector('#cloudLink'); link.hidden = !mapping?.enabled;
+    if (mapping?.enabled) { const url = new URL(location.pathname, location.origin); url.searchParams.set('live', mapping.share); link.href = url.href; }
     panel.querySelector('#cloudStop').disabled = !owner() || !mapping?.enabled;
   }
   panel.querySelector('#cloudLogin').onclick = async () => {
