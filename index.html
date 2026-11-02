@@ -1213,7 +1213,7 @@ body.share-mode .warn-banner{display:none!important}
     <span class="hdiv"></span>
     <button type="button" class="btn primary" id="btnSchedGen">絵コンテから取り込み</button>
     <button type="button" class="btn" id="btnSchedAddRow">＋ 行を追加</button>
-    <button type="button" class="btn" id="btnCastTime">出演者の拘束時間</button>
+    <button type="button" class="btn" id="btnCastTime">出演者の時間</button>
     <label class="live-toggle" title="各行に実際の開始・終了時刻を記録し、予定とのずれを表示します"><input type="checkbox" id="chkSchedLive"> 当日の進行を記録</label>
     <div class="menu-wrap">
       <button type="button" class="btn" id="btnSchedExport" aria-haspopup="true" aria-expanded="false">書き出し ▾</button>
@@ -1457,11 +1457,11 @@ body.share-mode .warn-banner{display:none!important}
   </div>
 </div>
 
-<!-- ============ 出演者の拘束時間 ============ -->
+<!-- ============ 出演者の時間 ============ -->
 <div class="modal-backdrop" id="castBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="castTitle">
     <div class="modal-head">
-      <h2 id="castTitle">出演者の拘束時間</h2>
+      <h2 id="castTitle">出演者の時間</h2>
       <button type="button" class="icon-btn" id="btnCastClose" aria-label="閉じる">✕</button>
     </div>
     <div class="modal-body">
@@ -1569,7 +1569,7 @@ body.share-mode .warn-banner{display:none!important}
       <p>画面上部のタブで<b>「全日程」と「DAY別」</b>を切り替えられます。全日程では日ごとの見出し（日付・開始〜終了・所要時間・予備枠）を挟んで縦に並びます。</p>
       <p><b>絵コンテの各カットに撮影日を割り当てて</b>おくと（コマの「撮影日」欄／上部「表示項目」で表示切替）、<b>「絵コンテから取り込み」</b>で各日の行へ自動で振り分けられます。手で足した行にも「カット選択」ボタンからカット番号を割り当てられ、演者・機材が自動で入ります。</p>
       <p><b>横・縦の撮影済みチェック</b>は各行のカット番号ごとに「☐横 ☐縦」が並びます。その場でチェックすると、日別・全体の残り件数が画面上部に出ます。<b>縦の撮り忘れ</b>はチェック機能でも警告されます。</p>
-      <p><b>「出演者の拘束時間」</b>ボタンで、演者ごとの集合・解散・拘束時間を日別に自動集計します（テキストでコピー可）。<b>撮影設定</b>欄に機材やカメラ設定を書いておくと、香盤表PDFの見出しに印字されます。</p>
+      <p><b>「出演者の時間」</b>ボタンで、演者ごとの集合・解散・出演時間（予備含む、行間の休憩・待機は除外）を日別に自動集計します（テキストでコピー可）。<b>撮影設定</b>欄に機材やカメラ設定を書いておくと、香盤表PDFの見出しに印字されます。</p>
       <p><b>開始時刻と各行の所要時間を入れると、以降の時刻が自動で積み上がります。</b>行を並べ替えたり所要時間を変えると、全体の時刻がその場で再計算されます。「＋行を追加」で準備・移動・休憩などの行も挟めます。<b>備考</b>は各行の下段に横幅いっぱいで表示されるので、長文の段取りや注意点も読みやすく書けます。</p>
       <p><b>区分</b>は「撮影／準備／移動／休憩／撤収／その他」から選べ、区分ごとに色分けされます。<b>撮影とその他以外ではカット選択は表示されません</b>（カットを割り当てない行のため）。<b>撮影場所</b>は専用の欄があり、取り込み時や「カット選択」で<b>カットの撮影場所が自動で入ります</b>。手で直した場合はその内容を優先し、空にすると自動入力に戻ります。</p>
       <p><b>所要時間の内訳</b>：所要時間の下の「＋内訳」で、セッティング・撮影・撤収などの内訳を別枠で入れられます。<b>内訳の合計がそのまま所要時間になります</b>（PDF・CSV・共有ページにも出ます）。<b>準備</b>の行には<b>機材チェック</b>が出ます（その日の撮影で使う機材。未設定なら登録機材すべて）。</p>
@@ -1578,7 +1578,7 @@ body.share-mode .warn-banner{display:none!important}
       <p>書き出しは<b>PDF 日別</b>（表示中の日）と<b>PDF 全日程まとめ</b>、<b>CSV</b>（撮影日の列つき）に対応しています。PDFには横・縦のチェック欄が入るので、現場で紙に書き込めます。用紙は<b>A4縦／A4横</b>、<b>1ページに収める／複数ページに分ける</b>を書き出しメニューで選べます（初期設定はA4縦・1ページに収める）。行数が多いと縮小されるため、文字が小さいと感じたら「複数ページに分ける」をお選びください。</p>
 
       <h3>演者へのURL共有</h3>
-      <p>PDFを何度も送り直さなくて済むよう、<b>URLで共有</b>できます。「書き出し → 共有用JSONを書き出し」を押すとファイルが保存されるので、<b>index.html と同じ要領でGitHubにアップ</b>してください。表示されるURLを演者に送れば、閲覧専用の香盤表が開きます（絵コンテの絵・出演者の拘束時間つき）。</p>
+      <p>PDFを何度も送り直さなくて済むよう、<b>URLで共有</b>できます。「書き出し → 共有用JSONを書き出し」を押すとファイルが保存されるので、<b>index.html と同じ要領でGitHubにアップ</b>してください。表示されるURLを演者に送れば、閲覧専用の香盤表が開きます（絵コンテの絵・出演者の時間つき）。</p>
       <div class="help-note"><b>内容を直したときは、同じファイル名でJSONを上書きするだけです。URLは変わらないので再送は不要</b>で、全員の画面が自動的に新しくなります。共有ページは閲覧専用なので、演者が内容を書き換えることはできません。<br>
       ただしリポジトリが公開設定のため<b>URLを知っている人は誰でも閲覧できます</b>。個人情報や社外秘の記載にはご注意ください。</div>
       <p>チェック機能には、<b>どの撮影日にも入っていないカット</b>・<b>複数の日に重複しているカット</b>・<b>終業時刻の超過</b>・<b>昼休憩への撮影の混入</b>の警告が入ります。終業時刻と昼休憩は撮影日ごとに変更できます。</p>
@@ -4557,7 +4557,7 @@ function buildPrepData() {
 function compactNos(nos) {
   const out = [];
   let start = null, prev = null;
-  nos.slice().sort((a, b) => a - b).forEach(n => {
+  [...new Set(nos.map(Number).filter(n => Number.isInteger(n) && n > 0))].sort((a, b) => a - b).forEach(n => {
     if (start === null) { start = prev = n; return; }
     if (n === prev + 1) { prev = n; return; }
     out.push(start === prev ? `${start}` : `${start}-${prev}`);
@@ -4634,7 +4634,7 @@ document.getElementById("prepBody").addEventListener("input", (e) => {
   scheduleSave();
 });
 
-/* 出演者の拘束時間 */
+/* 出演者の時間 */
 function openCastModal() {
   renderCastModal();
   document.getElementById("castBackdrop").classList.add("open");
@@ -4649,7 +4649,7 @@ document.getElementById("castBackdrop").addEventListener("click", (e) => {
   if (e.target.id === "castBackdrop") closeCastModal();
 });
 document.getElementById("btnCastCopy").addEventListener("click", () => {
-  copyText(castScheduleText()).then(() => toast("出演者の拘束時間をコピーしました"));
+  copyText(castScheduleText()).then(() => toast("出演者の時間をコピーしました"));
 });
 
 function openPrepModal() {
@@ -4969,6 +4969,18 @@ function setLocationWindow(name, value) {
 }
 
 /* ---------------- 出演者別の拘束時間 ---------------- */
+function castActiveMinutes(rows) {
+  const intervals = rows.map(r => [Number(r._start), Number(r._end)])
+    .filter(([start, end]) => Number.isFinite(start) && Number.isFinite(end) && end > start)
+    .sort((a, b) => a[0] - b[0]);
+  let total = 0, start = null, end = null;
+  for (const [nextStart, nextEnd] of intervals) {
+    if (start === null) { start = nextStart; end = nextEnd; }
+    else if (nextStart <= end) end = Math.max(end, nextEnd);
+    else { total += end - start; start = nextStart; end = nextEnd; }
+  }
+  return total + (start === null ? 0 : end - start);
+}
 function castSchedule() {
   const s = schedule();
   const info = computeSchedTimes();
@@ -4985,19 +4997,21 @@ function castSchedule() {
       });
     });
     const list = [...byCast.values()].map(g => ({
-      name: g.name, start: g.start, end: g.end, minutes: g.end - g.start,
-      cutNos: g.rows.reduce((a, r) => a.concat(r.cutNos || []), []).sort((a, b) => a - b)
+      name: g.name, start: g.start, end: g.end,
+      // 出演する行だけを合計。行間の休憩・待機は含めず、同時刻の重複も二重加算しない。
+      minutes: castActiveMinutes(g.rows),
+      cutNos: [...new Set(g.rows.flatMap(r => r.cutNos || []).map(Number))].sort((a, b) => a - b)
     })).sort((a, b) => a.start - b.start);
     return { day: d, info: info[d.id], list };
   });
 }
 function castScheduleText() {
-  const out = [`【出演者の拘束時間】${state.meta.title || "無題プロジェクト"}`, ""];
+  const out = [`【出演者の時間】${state.meta.title || "無題プロジェクト"}`, ""];
   castSchedule().forEach(g => {
     if (!g.list.length) return;
     out.push(`■ ${g.day.name}${g.day.date ? `（${g.day.date}）` : ""}`);
     g.list.forEach(c => {
-      out.push(`　${c.name}：集合 ${fmtHM(c.start)} ／ 解散 ${fmtHM(c.end)} ／ 拘束 ${fmtMin(c.minutes)}` +
+      out.push(`　${c.name}：集合 ${fmtHM(c.start)} ／ 解散 ${fmtHM(c.end)} ／ 出演時間（予備含む） ${fmtMin(c.minutes)}` +
         (c.cutNos.length ? `　カット #${compactNos(c.cutNos)}` : ""));
     });
     out.push("");
@@ -5012,11 +5026,11 @@ function renderCastModal() {
     body.innerHTML = `<div class="prep-empty">演者が設定された行がありません。<br>絵コンテのカットに演者名を入れて「絵コンテから取り込み」を実行してください。</div>`;
     return;
   }
-  body.innerHTML = groups.map(g => `
+  body.innerHTML = `<p style="font-size:var(--fs-sm)">出演時間は出演する行の合計（Vチェック・予備を含む）です。行間の休憩・待機は含みません。集合〜解散の経過時間とは異なります。</p>` + groups.map(g => `
     <div class="cast-day">
       <h4>${esc(g.day.name)}${g.day.date ? `（${esc(g.day.date)}）` : ""}　<span style="font-weight:400;font-size:var(--fs-xs);color:#b8c6d4">撮影 ${fmtHM(g.info.start)}〜${fmtHM(g.info.end)}</span></h4>
       <table>
-        <thead><tr><th>出演者</th><th>集合</th><th>解散</th><th>拘束時間</th><th>該当カット</th></tr></thead>
+        <thead><tr><th>出演者</th><th>集合</th><th>解散</th><th>出演時間（予備含む）</th><th>該当カット</th></tr></thead>
         <tbody>${g.list.map(c => `
           <tr>
             <td><b>${esc(c.name)}</b></td>
@@ -6347,11 +6361,11 @@ function renderShareDay(d) {
 function renderShareCast() {
   const groups = (shareData.cast || []).filter(g => g.list && g.list.length);
   if (!groups.length) return `<div class="share-loading">出演者の情報はありません。</div>`;
-  return groups.map(g => `
+  return `<p>出演時間は出演する行の合計（Vチェック・予備を含む）です。行間の休憩・待機は含みません。</p>` + groups.map(g => `
     <section class="sv-day sv-cast">
       <div class="sv-dayhead"><b>${esc(g.day)}</b></div>
       <table>
-        <thead><tr><th>出演者</th><th>集合</th><th>解散</th><th>拘束時間</th><th>該当カット</th></tr></thead>
+        <thead><tr><th>出演者</th><th>集合</th><th>解散</th><th>出演時間（予備含む）</th><th>該当カット</th></tr></thead>
         <tbody>${g.list.map(c => `
           <tr ${shareHighlight === c.name ? 'style="background:var(--accent-weak)"' : ""}>
             <td><b>${esc(c.name)}</b></td>
