@@ -1255,6 +1255,7 @@ body.share-mode .warn-banner{display:none!important}
     <span class="sched-summary" id="schedSummary"></span>
   </div>
 
+  <div id="schedCutWarnings" role="status" aria-live="polite"></div>
   <div class="day-editor" id="dayEditor"></div>
 
   <details class="setup-box" id="setupBox">
@@ -5185,6 +5186,32 @@ function shotChkHTML(r) {
   }).join("") + `</div>`;
 }
 
+function missingSchedCut(r) {
+  return r.type === "shoot" && !(r.cutNos || []).length;
+}
+function renderSchedCutWarnings() {
+  const s = schedule();
+  const missing = s.rows.filter(missingSchedCut);
+  $("#schedCutWarnings").innerHTML = missing.length ? `<div style="border:1px solid #c35454;border-radius:8px;padding:12px;margin:12px 0;background:#fff5f5;color:#8b2424">
+    <strong>⚠️ 撮影カット未割当：${missing.length}箇所（全日程）</strong>
+    <div>出演者の時間に反映されない場合があります。カットを選択してください。</div>
+    ${missing.map(r => `<button type="button" class="mini-btn" data-missing-row="${esc(r.id)}" style="margin:6px 6px 0 0">${esc(dayById(r.dayId)?.name || "撮影日未設定")}｜${esc(r.label || "名称未設定")}</button>`).join("")}
+    </div>` : "";
+}
+$("#schedCutWarnings").addEventListener("click", e => {
+  const button = e.target.closest("[data-missing-row]");
+  if (!button) return;
+  const row = schedule().rows.find(r => r.id === button.dataset.missingRow);
+  if (!row) return;
+  schedDayView = row.dayId || "";
+  renderSchedule();
+  const el = $$("#schedTable [data-row-id]").find(el => el.dataset.rowId === row.id);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.querySelector("[data-srow-act=editCuts]")?.focus({ preventScroll: true });
+  }
+});
+
 function schedRowHTML(r) {
   const cutsOK = typeHasCuts(r.type);
   const hasBd = (r.breakdown || []).length > 0;
@@ -5193,7 +5220,7 @@ function schedRowHTML(r) {
   const cast = r.cast || [], equip = r.equipment || [];
   return `
     <div class="sched-row type-${r.type} ${r.stale ? "stale" : ""}"
-         data-row-id="${r.id}" data-drag="schedrow">
+         data-row-id="${r.id}" data-drag="schedrow" ${missingSchedCut(r) ? `style="outline:2px solid #c35454;outline-offset:-2px"` : ""}>
       <span class="sr-handle" title="ドラッグで並べ替え">⠿</span>
       <div class="sr-side">
         <span class="sched-time">${fmtHM(r._start)}<small>〜${fmtHM(r._end)}</small></span>
@@ -5215,7 +5242,7 @@ function schedRowHTML(r) {
               placeholder="${cutsOK ? "カット選択で自動入力" : "場所"}">${esc(r.location || "")}</textarea>${
             win ? `<span class="win-badge">窓 ${esc(win)}</span>` : ""}</span></span>
           ${cutsOK ? `<span class="mi mi-cuts"><span class="mi-k">カット</span><span class="mi-v">
-            ${nos.length ? shotChkHTML(r) : `<span class="mi-empty">未割当</span>`}
+            ${nos.length ? shotChkHTML(r) : `<span class="mi-empty">${missingSchedCut(r) ? "⚠️ 未割当" : "未割当"}</span>`}
             <button type="button" class="mini-btn" data-srow-act="editCuts">カット選択</button></span></span>` : ""}
           ${cast.length ? `<span class="mi"><span class="mi-k">演者</span><span class="mi-v">${cast.map(v => `<span class="tag">${esc(v)}</span>`).join("")}</span></span>` : ""}
           ${equip.length ? `<span class="mi"><span class="mi-k">機材</span><span class="mi-v">${equip.map(v => `<span class="tag eq">${esc(v)}</span>`).join("")}</span></span>` : ""}
@@ -5366,6 +5393,7 @@ function renderScheduleBody() {
 
 function updateSchedSummary(info) {
   const s = schedule();
+  renderSchedCutWarnings();
   info = info || computeSchedTimes();
   if (!s.rows.length) { $("#schedSummary").innerHTML = ""; return; }
   const days = schedDayView ? s.days.filter(d => d.id === schedDayView) : s.days;
